@@ -109,7 +109,7 @@ public class LoginForm extends JFrame {
                 new frameDisplay(dashboardFrame);
                 this.dispose();
             } else {
-                JOptionPane.showMessageDialog(this, "Invalid credentials!");
+                CustomDialog.show(this, "Invalid credentials!");
             }
         } catch (Exception e) {
             e.printStackTrace();

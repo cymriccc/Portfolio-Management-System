@@ -137,11 +137,11 @@ public class ProfilePanel extends JPanel {
                 if (!selectedImagePath.isEmpty()) {
                     updateSidebarImage(frameObject, selectedImagePath);
                 }
-                JOptionPane.showMessageDialog(this, "Student Profile Synced!");
+                CustomDialog.show(frameObject.getFrame(), "Student Profile Synced!");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error saving profile.");
+            CustomDialog.show(frameObject.getFrame(), "Error saving profile.");
         }
     }
 
