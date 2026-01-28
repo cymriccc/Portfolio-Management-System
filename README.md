@@ -33,11 +33,11 @@ git clone [https://github.com/yourusername/your-repo-name.git](https://github.co
 
 * Import the provided SQL schema into your MySQL instance.
 
-* Update db/Database.java with your local credentials.
+* Update `db/Database.java` with your local credentials.
 
 3. Run the Application:
 
-* Run LoginForm.java to start the application.
+* Run `LoginForm.java` to start the application.
 
 ## 📝 Roadmap (Planned Features)
 * [ ] Image Uploading for Avatars (Currently in testing)
