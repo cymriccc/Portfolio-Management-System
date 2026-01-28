@@ -21,7 +21,6 @@ A desktop-based management system designed for students to organize, build, and 
 src/
  ├── db/            # Database connection and configuration
  ├── gui/           # UI Components (LoginForm, MainContent, ProfilePanel, etc.)
- └── assets/        # Icons, images, and brand assets
 ```
 ## 🏗️ Installation & Setup
 1. Clone the repo:
