@@ -25,48 +25,64 @@ public class LoginForm extends JFrame {
         JLabel title = new JLabel("WELCOME BACK");
         title.setBounds(centerX, 100, fieldWidth, 50);
         title.setFont(new Font("Helvetica", Font.BOLD, 36));
-        title.setForeground(new Color(0xf5e4d7));
+        title.setForeground(Main.TEXT_COLOR);
         title.setHorizontalAlignment(SwingConstants.CENTER);
         add(title); 
 
         // --- Username Field ---
         JLabel lblUser = new JLabel("Username");
         lblUser.setBounds(centerX, 180, 100, 20);
-        lblUser.setForeground(new Color(0xf5e4d7));
+        lblUser.setForeground(Main.TEXT_COLOR);
         add(lblUser);
 
         txtUsername = new JTextField();
         txtUsername.setBounds(centerX, 205, fieldWidth, 45);
-        txtUsername.setBackground(new Color(0x94a899));
-        txtUsername.setForeground(Color.WHITE);
-        txtUsername.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        txtUsername.setBackground(Color.WHITE);
+        txtUsername.setForeground(Main.TEXT_COLOR);
+        txtUsername.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD1D8E0), 1),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
         add(txtUsername);
 
         // --- Password Field ---
         JLabel lblPass = new JLabel("Password");
         lblPass.setBounds(centerX, 270, 100, 20);
-        lblPass.setForeground(new Color(0xf5e4d7));
+        lblPass.setForeground(Main.TEXT_COLOR);
         add(lblPass);
 
         txtPassword = new JPasswordField();
         txtPassword.setBounds(centerX, 295, fieldWidth, 45);
-        txtPassword.setBackground(new Color(0x94a899));
-        txtPassword.setForeground(Color.WHITE);
-        txtPassword.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        txtPassword.setBackground(Color.WHITE);
+        txtPassword.setForeground(Main.TEXT_COLOR);
+        txtPassword.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD1D8E0), 1),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
         add(txtPassword);
 
         btnLogin = new JButton("SIGN IN");
         btnLogin.setBounds(centerX, 380, fieldWidth, 55);
-        btnLogin.setBackground(new Color(0x73877b));
-        btnLogin.setForeground(new Color(0xf5e4d7));
+        btnLogin.setBackground(Main.ACCENT_COLOR);
+        btnLogin.setForeground(Color.WHITE);
         btnLogin.setFocusPainted(false);
         btnLogin.setBorderPainted(false);
         btnLogin.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLogin.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+            btnLogin.setBackground(Main.ACCENT_COLOR.darker());
+        }   
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+            btnLogin.setBackground(Main.ACCENT_COLOR);
+        }
+        });
         add(btnLogin);
 
         btnRegister = new JButton("No account? Create one");
         btnRegister.setBounds(centerX, 450, fieldWidth, 30);
-        btnRegister.setForeground(new Color(0xf5e4d7));
+        btnRegister.setForeground(Main.TEXT_COLOR);
         btnRegister.setContentAreaFilled(false);
         btnRegister.setBorderPainted(false);
         btnRegister.setFocusPainted(false);
@@ -82,17 +98,19 @@ public class LoginForm extends JFrame {
         addWindowControls();
     }
 
+    // Login logic
     private void login() {
         String user = txtUsername.getText();
         String pass = new String(txtPassword.getPassword());
         
-
+        // Database verification
         try (Connection conn = Database.getConnection()) {
             String sql = "SELECT full_name, course_year FROM users WHERE username=? AND password=?";
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setString(1, user);
             pst.setString(2, pass);
 
+            // Execute query
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
                 String name = rs.getString("full_name");
@@ -117,17 +135,18 @@ public class LoginForm extends JFrame {
         }
     }
 
+    // Custom window controls
     private void addWindowControls() {
         JLayeredPane lp = this.getLayeredPane();
 
-        Color originalColor = new Color(0x839788); // Sage
-        Color hoverColor = new Color(0x94a899);    // Light Sage
-        Color closeHoverColor = new Color(0xc94c4c); // Red
+        Color idleColor = Main.BG_COLOR; 
+        Color minHover = new Color(0xD1D8E0); 
+        Color closeHover = new Color(0xE74C3C);
 
         // -- CLOSE BUTTON --
         JButton closeBtn = new JButton("X");
         closeBtn.setBounds(545, 10, 45, 30); // Positioned for 600 width
-        closeBtn.setBackground(originalColor);
+        closeBtn.setBackground(idleColor);
         closeBtn.setForeground(Color.BLACK);
         closeBtn.setBorderPainted(false);
         closeBtn.setFocusable(false);
@@ -136,11 +155,11 @@ public class LoginForm extends JFrame {
     
         closeBtn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                closeBtn.setBackground(closeHoverColor);
+                closeBtn.setBackground(closeHover);
                 closeBtn.setForeground(Color.WHITE);
             }
             public void mouseExited(java.awt.event.MouseEvent e) {
-                closeBtn.setBackground(originalColor);
+                closeBtn.setBackground(idleColor);
                 closeBtn.setForeground(Color.BLACK);
             }
         });
@@ -148,7 +167,7 @@ public class LoginForm extends JFrame {
         // -- MINIMIZE BUTTON --
         JButton minBtn = new JButton("-");
         minBtn.setBounds(495, 10, 45, 30); // Positioned to the left of Close
-        minBtn.setBackground(originalColor);
+        minBtn.setBackground(idleColor);
         minBtn.setForeground(Color.BLACK);
         minBtn.setBorderPainted(false);
         minBtn.setFocusable(false);
@@ -157,11 +176,11 @@ public class LoginForm extends JFrame {
         
         minBtn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                minBtn.setBackground(hoverColor);
+                minBtn.setBackground(minHover);
                 minBtn.setForeground(Color.WHITE);
             }
             public void mouseExited(java.awt.event.MouseEvent e) {
-                minBtn.setBackground(originalColor);
+                minBtn.setBackground(idleColor);
                 minBtn.setForeground(Color.BLACK);
             }
         });
