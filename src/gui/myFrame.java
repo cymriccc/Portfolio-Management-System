@@ -2,6 +2,7 @@ package gui;
 
 import java.awt.*;
 import javax.swing.*;
+import main.Main;
 
 public class myFrame {
     JFrame frame = new JFrame("Student Portfolio System");
@@ -19,7 +20,7 @@ public class myFrame {
 
         // Sidebar (Menu)
         menu.setBounds(0, 0, 350, 728); 
-        menu.setBackground(new Color(0x73877b)); 
+        menu.setBackground(Main.DARK_PANEL); 
         menu.setLayout(null);
 
         // Content Area (Switcher)

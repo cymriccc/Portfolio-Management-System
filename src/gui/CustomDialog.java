@@ -108,9 +108,12 @@ public class CustomDialog extends JDialog {
     }
 
     // Static helper method to call it easily
-    public static void show(JFrame parent, String message, boolean isSuccess) {
+    public static void show(Component parent, String message, boolean isSuccess) {
         Color themeColor = isSuccess ? Main.ACCENT_COLOR : new Color(0xE74C3C); // Red for errors
 
-        new CustomDialog(parent, message, themeColor).setVisible(true);
+        Window window = SwingUtilities.getWindowAncestor(parent);
+        JFrame parentFrame = (window instanceof JFrame) ? (JFrame) window : null;
+
+        new CustomDialog(parentFrame, message, themeColor).setVisible(true);
     }
 }

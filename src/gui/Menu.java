@@ -3,6 +3,7 @@ package gui;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import main.Main;
 
 public class Menu {
     public Menu(myFrame frameObject) {
@@ -11,7 +12,7 @@ public class Menu {
         // --- LOGO IMAGE ---
         try {
             ImageIcon logoIcon = new ImageIcon("logo.png");
-            int logoSize = 180;
+            int logoSize = 150;
             Image image = logoIcon.getImage().getScaledInstance(logoSize, logoSize, Image.SCALE_SMOOTH);
             logoIcon = new ImageIcon(image);
             JLabel logoLabel = new JLabel(logoIcon);
@@ -23,34 +24,47 @@ public class Menu {
 
         // --- TITLE LABEL ---
         JLabel titleLabel = new JLabel("Student Portfolio");
-        titleLabel.setBounds(0, 190, 350, 40); // Adjusted Y to sit below logo
+        titleLabel.setBounds(0, 180, 350, 40);
         titleLabel.setFont(new Font("Helvetica", Font.BOLD, 22));
-        titleLabel.setForeground(new Color(0xf5e4d7));
+        titleLabel.setForeground(Color.WHITE);
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         menuPanel.add(titleLabel);
 
         // --- NAVIGATION BUTTONS ---
-        menuPanel.add(createMenuButton("Dashboard", 260, frameObject, "DASHBOARD"));
-        menuPanel.add(createMenuButton("My Portfolio", 320, frameObject, "PORTFOLIO"));
-        menuPanel.add(createMenuButton("Settings", 380, frameObject, "SETTINGS"));
+        // 1. Create the buttons and store them in variables
+        JButton dashBtn = createMenuButton("Dashboard", 260, frameObject, "DASHBOARD");
+        JButton portBtn = createMenuButton("My Portfolio", 320, frameObject, "PORTFOLIO");
+        JButton settBtn = createMenuButton("Settings", 380, frameObject, "SETTINGS");
+
+        // 2. Add them to the sidebar
+        menuPanel.add(dashBtn);
+        menuPanel.add(portBtn);
+        menuPanel.add(settBtn);
+
+        // 3. Force the Dashboard button to be "Active" on startup
+        dashBtn.setForeground(new Color(0x575FCF)); // Indigo
+        dashBtn.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 5, 0, 0, new Color(0x575FCF)), // The vertical line
+            BorderFactory.createEmptyBorder(0, 35, 0, 0)
+        ));
 
         // BOTTOM PROFILE SECTION 
         JPanel bottomSection = new JPanel();
         bottomSection.setBounds(0, 528, 350, 200); 
-        bottomSection.setBackground(new Color(0x73877b)); 
+        bottomSection.setBackground(new Color(0x252b2b)); 
         bottomSection.setLayout(null);
 
         // Tiny Profile Preview in Sidebar
-        frameObject.sidebarProfileImg.setBounds(30, 50, 60, 60);
-        frameObject.sidebarProfileImg.setBorder(BorderFactory.createLineBorder(new Color(0xf5e4d7), 1));
+        frameObject.sidebarProfileImg.setBounds(30, 40, 60, 60);
+        frameObject.sidebarProfileImg.setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR, 2));
         bottomSection.add(frameObject.sidebarProfileImg);
 
         // My Profile Button 
         JButton profileBtn = new JButton("My Profile");
         profileBtn.setBounds(100, 50, 250, 60); // Adjusted width to fit section
-        profileBtn.setBackground(new Color(0x73877b)); 
-        profileBtn.setForeground(new Color(0xf5e4d7));
-        profileBtn.setFont(new Font("Helvetica", Font.BOLD, 18));
+        profileBtn.setBackground(new Color(0x252b2b)); 
+        profileBtn.setForeground(new Color(0xECF0F1));
+        profileBtn.setFont(new Font("Helvetica", Font.BOLD, 16));
         profileBtn.setHorizontalAlignment(SwingConstants.LEFT);
         profileBtn.setBorderPainted(false);
         profileBtn.setFocusPainted(false);
@@ -61,17 +75,23 @@ public class Menu {
         
         // Hover Logic for Profile Button
         profileBtn.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) { profileBtn.setBackground(new Color(0x839788)); }
-            public void mouseExited(MouseEvent e) { profileBtn.setBackground(new Color(0x73877b)); }
+            public void mouseEntered(MouseEvent e) {
+                profileBtn.setBackground(Main.ACCENT_COLOR);
+            }
+            public void mouseExited(MouseEvent e) {
+                profileBtn.setBackground(new Color(0x252b2b));
+
+            }
         });
         bottomSection.add(profileBtn);
 
         // Logout Button
         JButton logoutBtn = new JButton("Logout");
-        logoutBtn.setBounds(50, 140, 250, 40);
-        logoutBtn.setBackground(new Color(0xc94c4c)); 
-        logoutBtn.setForeground(Color.WHITE);
+        logoutBtn.setBounds(50, 130, 250, 40);
+        logoutBtn.setBackground(new Color(0x2D3436)); 
+        logoutBtn.setForeground(new Color(0XFFFFFF));
         logoutBtn.setFont(new Font("Helvetica", Font.BOLD, 14));
+        logoutBtn.setBorder(BorderFactory.createLineBorder(new Color(0x636E72), 1));
         logoutBtn.setFocusPainted(false);
         logoutBtn.setBorderPainted(false);
         logoutBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -97,8 +117,14 @@ public class Menu {
 
         // Hover Logic for Logout Button
         logoutBtn.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) { logoutBtn.setBackground(new Color(0xd95c5c)); } 
-            public void mouseExited(MouseEvent e) { logoutBtn.setBackground(new Color(0xc94c4c)); }
+            public void mouseEntered(MouseEvent e) {
+                logoutBtn.setForeground(new Color(0xE74C3C));
+                logoutBtn.setBorder(BorderFactory.createLineBorder(new Color(0xE74C3C), 1));
+            } 
+            public void mouseExited(MouseEvent e) {
+                logoutBtn.setForeground(new Color(0xFFFFFF));
+                logoutBtn.setBorder(BorderFactory.createLineBorder(new Color(0x636E72), 1));
+            }
         });
         
         bottomSection.add(logoutBtn);
@@ -109,29 +135,50 @@ public class Menu {
     private JButton createMenuButton(String text, int yPos, myFrame frameObject, String cardName) {
         JButton btn = new JButton(text);
         btn.setBounds(0, yPos, 350, 50);
-        btn.setBackground(new Color(0x73877b));
-        btn.setForeground(new Color(0xf5e4d7));
-        btn.setFont(new Font("Helvetica", Font.PLAIN, 18));
+        btn.setBackground(Main.DARK_PANEL);
+        btn.setForeground(new Color(0xD1D8E0));
+        btn.setFont(new Font("Helvetica", Font.BOLD, 16));
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
+        btn.setContentAreaFilled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setHorizontalAlignment(SwingConstants.LEFT);
         btn.setMargin(new Insets(0, 50, 0, 0));
 
-        // CardLayout Trigger
+        // Initial Border (Empty so text doesn't jump)
+        btn.setBorder(BorderFactory.createEmptyBorder(0, 40, 0, 0));
+
         btn.addActionListener(e -> {
-            frameObject.getCardLayout().show(frameObject.getContainer(), cardName);
+           frameObject.getCardLayout().show(frameObject.getContainer(), cardName);
+            resetButtonStyles(frameObject.getMenu()); // Clear other lines
+            // Add the Indigo "Active Line" on the left
+            btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 5, 0, 0, new Color(0x575FCF)),
+                BorderFactory.createEmptyBorder(0, 35, 0, 0)
+            ));
+            btn.setForeground(new Color(0x575FCF));
         });
         
         // Hover Effects
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
-                btn.setBackground(new Color(0x839788));
+                btn.setBackground(Main.ACCENT_COLOR);
             }
             public void mouseExited(MouseEvent e) {
-                btn.setBackground(new Color(0x73877b));
+                if (!btn.getForeground().equals(new Color(0x575FCF))) {
+                    btn.setForeground(new Color(0xD1D8E0));
+                }
             }
         });
         return btn;
+    }
+
+    private void resetButtonStyles(JPanel menuPanel) {
+        for (Component c : menuPanel.getComponents()) {
+            if (c instanceof JButton) {
+                c.setForeground(new Color(0xD1D8E0));
+                ((JButton) c).setBorder(BorderFactory.createEmptyBorder(0, 40, 0, 0));
+            }
+        }
     }
 }
