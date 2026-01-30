@@ -48,11 +48,12 @@ git clone https://github.com/cymriccc/Student-Portfolio-System.git
 * Run `Main.java` inside the `main` package to start the application.
 
 ## 📝 Roadmap (Planned Features)
-* [ ] Image Uploading for Avatars (Currently in testing)
-
-* [ ] Portfolio template export (PDF/JSON)
-
-* [x] Admin Login for managing database
+- [x] Implement Slate & Ice UI Theme
+- [x] Fix CustomDialog JPanel compatibility
+- [x] Build Portfolio Upload Logic
+- [x] Admin Login for managing database
+- [ ] Create Project Gallery View
+- [ ] Finalize Settings & Profile Page
 
 ## ⚖️ License
 This project is licensed under the MIT License — see the LICENSE file for details.
