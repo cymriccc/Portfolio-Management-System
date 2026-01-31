@@ -61,7 +61,7 @@ public class Menu {
 
         // My Profile Button 
         JButton profileBtn = new JButton("My Profile");
-        profileBtn.setBounds(100, 50, 250, 60); // Adjusted width to fit section
+        profileBtn.setBounds(100, 40, 250, 60); // Adjusted width to fit section
         profileBtn.setBackground(new Color(0x252b2b)); 
         profileBtn.setForeground(new Color(0xECF0F1));
         profileBtn.setFont(new Font("Helvetica", Font.BOLD, 16));

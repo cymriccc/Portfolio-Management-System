@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import javax.swing.*; // to filter image file types
 import javax.swing.filechooser.FileNameExtensionFilter;
+import main.Main;
 
 public class ProfilePanel extends JPanel {
     private JTextField nameField, courseField, emailField, idField;
@@ -23,18 +24,18 @@ public class ProfilePanel extends JPanel {
         this.currentUsername = username;
         this.dashRef = dashboard;
         setLayout(null);
-        setBackground(new Color(0x839788));
+        setBackground(Main.BG_COLOR);
 
         // HEADER
         JLabel title = new JLabel("User Profile Settings");
         title.setBounds(40, 40, 400, 50);
         title.setFont(new Font("Helvetica", Font.BOLD, 28));
-        title.setForeground(new Color(0xf5e4d7));
+        title.setForeground(Main.TEXT_COLOR);
         add(title);
 
         JPanel underline = new JPanel();
         underline.setBounds(40, 85, 80, 4);
-        underline.setBackground(new Color(0xf5e4d7));
+        underline.setBackground(Main.ACCENT_COLOR);
         add(underline);
 
         // PROFILE IMAGE UI
@@ -65,15 +66,19 @@ public class ProfilePanel extends JPanel {
         add(createLabel("Short Bio", x, y + 375));
         bioArea = new JTextArea();
         bioArea.setBounds(x, y + 400, w, 120); 
-        bioArea.setBackground(new Color(0x94a899));
-        bioArea.setForeground(Color.WHITE);
+        bioArea.setBackground(Color.WHITE);
+        bioArea.setForeground(Main.TEXT_COLOR);
         bioArea.setLineWrap(true);
         bioArea.setWrapStyleWord(true);
-        bioArea.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        bioArea.setCaretColor(Main.ACCENT_COLOR); // Cursor color
+        bioArea.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD1D8E0), 1), // The visible gray line
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
         add(bioArea);
 
         // SUBMIT BUTTON
-        JButton saveBtn = createStyledButton("FINALIZE PROFILE", 700, 600, 200, 55);
+        JButton saveBtn = createSolidButton("FINALIZE PROFILE", 700, 600, 200, 55);
         saveBtn.addActionListener(e -> saveProfileChanges(frameObject));
         add(saveBtn);
 
@@ -112,7 +117,7 @@ public class ProfilePanel extends JPanel {
     private JLabel createSectionHeader(String text, int x, int y) {
         JLabel l = new JLabel(text.toUpperCase());
         l.setBounds(x, y, 300, 25);
-        l.setForeground(Color.WHITE);
+        l.setForeground(Main.ACCENT_COLOR);
         l.setFont(new Font("Helvetica", Font.BOLD, 13));
         return l;
     }
@@ -146,20 +151,16 @@ public class ProfilePanel extends JPanel {
     }
 
     private void setupImageUI(myFrame frameObject) {
-        JPanel imgShadow = new JPanel();
-        imgShadow.setBounds(695, 95, 190, 190);
-        imgShadow.setBackground(new Color(0x73877b)); 
-        add(imgShadow);
-
         imageLabel = new JLabel("No Photo", SwingConstants.CENTER);
         imageLabel.setBounds(700, 100, 180, 180);
         imageLabel.setOpaque(true);
-        imageLabel.setBackground(new Color(0x94a899));
-        imageLabel.setBorder(BorderFactory.createLineBorder(new Color(0xf5e4d7), 2));
-        imageLabel.setForeground(Color.WHITE);
+        imageLabel.setBackground(Color.WHITE);
+        imageLabel.setForeground(new Color(0x95a5a6));
+        imageLabel.setFont(new Font("Helvetica", Font.ITALIC, 12));
+        imageLabel.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 2));
         add(imageLabel);
 
-        JButton uploadBtn = createStyledButton("UPDATE AVATAR", 700, 300, 180, 35);
+        JButton uploadBtn = createOutlineButton("UPDATE AVATAR", 700, 300, 180, 35);
         uploadBtn.addActionListener(e -> chooseImage());
         add(uploadBtn);
     }
@@ -193,34 +194,56 @@ public class ProfilePanel extends JPanel {
     private JLabel createLabel(String txt, int x, int y) {
         JLabel l = new JLabel(txt);
         l.setBounds(x, y, 200, 20);
-        l.setForeground(new Color(0xf5e4d7));
-        l.setFont(new Font("Helvetica", Font.BOLD, 14));
+        l.setForeground(Main.TEXT_COLOR);
+        l.setFont(new Font("Helvetica", Font.BOLD, 13));
         return l;
     }
 
     private JTextField createField(int x, int y, int w, int h) {
         JTextField f = new JTextField(); //
         f.setBounds(x, y, w, h);
-        f.setBackground(new Color(0x94a899));
-        f.setForeground(Color.WHITE);
-        f.setCaretColor(Color.WHITE);
-        f.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        f.setBackground(Color.WHITE);
+        f.setForeground(Main.TEXT_COLOR);
+        f.setCaretColor(Main.ACCENT_COLOR);
+        f.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD1D8E0), 1),
+            BorderFactory.createEmptyBorder(0, 10, 0, 10)
+        ));
         return f;
     }
 
-    // Helper to create buttons with the same design as your menu
-    private JButton createStyledButton(String text, int x, int y, int w, int h) {
+    // For the big "FINALIZE" button
+    private JButton createSolidButton(String text, int x, int y, int w, int h) {
         JButton btn = new JButton(text);
         btn.setBounds(x, y, w, h);
-        btn.setBackground(new Color(0x73877b));
-        btn.setForeground(new Color(0xf5e4d7));
+        btn.setBackground(Main.ACCENT_COLOR); // Indigo
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Helvetica", Font.BOLD, 13));
         btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createLineBorder(new Color(0xf5e4d7), 1));
+        btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
         btn.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) { btn.setBackground(new Color(0x839788)); }
-            public void mouseExited(MouseEvent e) { btn.setBackground(new Color(0x73877b)); }
+            public void mouseEntered(MouseEvent e) { btn.setBackground(new Color(0x3F48CC)); } // Darker Indigo
+            public void mouseExited(MouseEvent e) { btn.setBackground(Main.ACCENT_COLOR); }
+        });
+        return btn;
+    }
+
+    // For the "UPDATE AVATAR" button
+    private JButton createOutlineButton(String text, int x, int y, int w, int h) {
+        JButton btn = new JButton(text);
+        btn.setBounds(x, y, w, h);
+        btn.setBackground(Color.WHITE);
+        btn.setForeground(Main.ACCENT_COLOR);
+        btn.setFont(new Font("Helvetica", Font.BOLD, 12));
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR, 1));
+
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setBackground(new Color(0xF1F2F6)); } // Light grey hover
+            public void mouseExited(MouseEvent e) { btn.setBackground(Color.WHITE); }
         });
         return btn;
     }
