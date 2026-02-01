@@ -52,7 +52,7 @@ git clone https://github.com/cymriccc/Student-Portfolio-System.git
 - [x] Fix CustomDialog JPanel compatibility
 - [x] Build Portfolio Upload Logic
 - [x] Admin Login for managing database
-- [ ] Create Project Gallery View
+- [x] Create Project Gallery View
 - [ ] Finalize Settings & Profile Page
 
 ## ⚖️ License
