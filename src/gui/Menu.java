@@ -32,19 +32,22 @@ public class Menu {
 
         // --- NAVIGATION BUTTONS ---
         // 1. Create the buttons and store them in variables
-        JButton dashBtn = createMenuButton("Dashboard", 260, frameObject, "DASHBOARD");
-        JButton portBtn = createMenuButton("My Portfolio", 320, frameObject, "PORTFOLIO");
-        JButton settBtn = createMenuButton("Settings", 380, frameObject, "SETTINGS");
-
+        JButton dashBtn = createMenuButton("Dashboard", 240, frameObject, "DASHBOARD");
+        JButton portBtn = createMenuButton("My Portfolio", 300, frameObject, "PORTFOLIO");
+        JButton discoveryBtn = createMenuButton("Discovery", 360, frameObject, "DISCOVERY");
+        JButton settBtn = createMenuButton("Settings", 420, frameObject, "SETTINGS");
+        
         // 2. Add them to the sidebar
         menuPanel.add(dashBtn);
         menuPanel.add(portBtn);
+        menuPanel.add(discoveryBtn);
         menuPanel.add(settBtn);
 
         // 3. Force the Dashboard button to be "Active" on startup
-        dashBtn.setForeground(new Color(0x575FCF)); // Indigo
+        dashBtn.setBounds(0, 240, 350, 50); // Match the new Y position
+        dashBtn.setForeground(new Color(0x575FCF)); 
         dashBtn.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 5, 0, 0, new Color(0x575FCF)), // The vertical line
+            BorderFactory.createMatteBorder(0, 5, 0, 0, new Color(0x575FCF)),
             BorderFactory.createEmptyBorder(0, 35, 0, 0)
         ));
 
