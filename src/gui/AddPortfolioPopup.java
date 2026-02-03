@@ -11,14 +11,16 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import main.Main;
 
 public class AddPortfolioPopup extends JDialog {
+    private int currentUserId;
     private File selectedFile;
     private JLabel lblFileName;
     private JTextField txtProjectName;
     private PortfolioPanel parentPanel;
 
-    public AddPortfolioPopup(Frame owner, PortfolioPanel parent) {
+    public AddPortfolioPopup(Frame owner, PortfolioPanel parent, int userId) {
         super(owner, "Add New Project", true);
         this.parentPanel = parent;
+        this.currentUserId = userId;
         
         setSize(500, 450);
         setLocationRelativeTo(owner);
@@ -117,7 +119,7 @@ public class AddPortfolioPopup extends JDialog {
             
             pst.executeUpdate();
             CustomDialog.show(this, "Uploaded!", true);
-            parentPanel.loadProjects(); // Refresh the gallery automatically!
+            parentPanel.loadProjects(currentUserId); // Refresh the gallery automatically!
             dispose(); // Close the popup
         } catch (Exception e) {
             e.printStackTrace();

@@ -7,13 +7,14 @@ import main.Main;
 public class MainContent {
     private DashboardPanel dashboard;
 
-    public MainContent(myFrame frameObject, String studentName, String courseYear, String username) {
+    public MainContent(myFrame frameObject, String studentName, String courseYear, String username, int userId) {
         JPanel container = frameObject.getContainer();
 
         dashboard = new DashboardPanel(studentName, courseYear);
 
         container.add(dashboard, "DASHBOARD");
-        container.add(new PortfolioPanel(), "PORTFOLIO"); 
+        container.add(new PortfolioPanel(userId), "PORTFOLIO");
+        container.add(new DiscoverPanel(), "DISCOVERY");
         container.add(new SettingsPanel(), "SETTINGS");
         container.add(new ProfilePanel(frameObject, username, dashboard), "PROFILE");
 

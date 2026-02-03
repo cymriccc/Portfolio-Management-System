@@ -103,7 +103,7 @@ public class LoginForm extends JFrame {
         String user = txtUsername.getText();
         String pass = new String(txtPassword.getPassword());
 
-        String sql = "SELECT role, full_name, course_year FROM users WHERE username = ? AND password = ?";
+        String sql = "SELECT id, role, full_name, course_year FROM users WHERE username = ? AND password = ?";
 
         // Database verification
         try (Connection conn = Database.getConnection()) {
@@ -114,6 +114,7 @@ public class LoginForm extends JFrame {
             ResultSet rs = pst.executeQuery();
             
             if (rs.next()) {
+                int id = rs.getInt("id");
                 String role = rs.getString("role");
                 String name = rs.getString("full_name");
                 String course = rs.getString("course_year");
@@ -127,7 +128,7 @@ public class LoginForm extends JFrame {
                 } else {
                     // Open standard Student Dashboard system
                     myFrame dashboardFrame = new myFrame();
-                    new MainContent(dashboardFrame, name, course, actualUsername);
+                    new MainContent(dashboardFrame, name, course, actualUsername, id);
                     new Menu(dashboardFrame);
                     new frameDisplay(dashboardFrame);
                 }

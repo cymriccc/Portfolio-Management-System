@@ -10,8 +10,11 @@ import main.Main;
 
 public class PortfolioPanel extends JPanel {
     private JPanel galleryContainer;
+    private int currentUserId;
 
-    public PortfolioPanel() {
+    public PortfolioPanel(int userId) {
+        this.currentUserId = userId;
+
         // MATCHING DASHBOARD COLOR
         setLayout(null);
         setBackground(Main.BG_COLOR); 
@@ -55,33 +58,48 @@ public class PortfolioPanel extends JPanel {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane);
 
-        loadProjects(); // Initial load from MySQL
+        loadProjects(currentUserId); // Initial load from MySQL
     }
 
     private void showAddPortfolioPopup() {
         // We pass 'this' so the popup can call loadProjects() when done
-        AddPortfolioPopup popup = new AddPortfolioPopup((Frame) SwingUtilities.getWindowAncestor(this), this);
+        AddPortfolioPopup popup = new AddPortfolioPopup(
+            (Frame) SwingUtilities.getWindowAncestor(this),
+            this,
+            this.currentUserId
+        );
         popup.setVisible(true);
     }
 
-    public void loadProjects() {
+    public void loadProjects(int userId) {
+        this.currentUserId = userId;
         galleryContainer.removeAll();
         // Fetching ID, Name, and the actual Image data
-        String sql = "SELECT id, project_name, file_data FROM portfolios";
+        System.out.println("DEBUG: Fetching projects for User ID: " + currentUserId);
+        String sql = "SELECT id, project_name, description, upload_date, file_data FROM portfolios WHERE user_id = ?";
 
         try (Connection conn = Database.getConnection();
-             PreparedStatement pst = conn.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery()) {
+            PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setInt(1, currentUserId);
+            ResultSet rs = pst.executeQuery();
 
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String name = rs.getString("project_name");
                 byte[] imgBytes = rs.getBytes("file_data");
             
-                // Create the card with the actual image
-                galleryContainer.add(createProjectCard(id, name, imgBytes));
+                if (imgBytes != null && imgBytes.length > 0) {
+                    System.out.println("DEBUG: Image found. Size: " + imgBytes.length + " bytes.");
+                    galleryContainer.add(createProjectCard(id, name, imgBytes));
+                } else {
+                    System.out.println("DEBUG: Image data is NULL or EMPTY for project: " + name);
+                    // Add a placeholder if the image is missing
+                   galleryContainer.add(createProjectCard(id, name, null)); 
+                }
             }
         } catch (Exception e) {
+            System.out.println("❌ SQL ERROR IN PortfolioPanel:");
             e.printStackTrace();
         }
         galleryContainer.revalidate();
@@ -89,22 +107,38 @@ public class PortfolioPanel extends JPanel {
     }
 
     private JPanel createProjectCard(int id, String name, byte[] imgBytes) {
-        JPanel card = new JPanel();
+        JPanel card = new JPanel(new BorderLayout());
         card.setPreferredSize(new Dimension(240, 220));
         card.setBackground(Color.WHITE);
-        card.setLayout(new BorderLayout());
         card.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 1));
 
         // --- 1. Image Preview ---
         JLabel imgLabel = new JLabel("", SwingConstants.CENTER);
-        if (imgBytes != null) {
-            ImageIcon icon = new ImageIcon(imgBytes);
-            // Scale image to fit the card (240x140)
-            Image scaled = icon.getImage().getScaledInstance(240, 140, Image.SCALE_SMOOTH);
-            imgLabel.setIcon(new ImageIcon(scaled));
+        imgLabel.setPreferredSize(new Dimension (240, 140));
+
+        if (imgBytes != null && imgBytes.length > 0) {
+            try {
+                // Convert bytes to ImageIcon
+                ImageIcon icon = new ImageIcon(imgBytes);
+            
+                // Check if icon actually loaded pixels
+                if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) {
+                    Image img = icon.getImage();
+                    // Smooth scaling is heavy; make sure dimensions match your label
+                    Image scaled = img.getScaledInstance(240, 140, Image.SCALE_SMOOTH);
+                    imgLabel.setIcon(new ImageIcon(scaled));
+                } else {
+                    imgLabel.setText("Corrupted Image");
+                }
+            } catch (Exception e) {
+                System.out.println("Error rendering image for " + name + ": " + e.getMessage());
+                imgLabel.setText("Error");
+            }
         } else {
             imgLabel.setText("No Preview");
+            imgLabel.setForeground(Color.GRAY);
         }
+
         card.add(imgLabel, BorderLayout.CENTER);
 
         // --- 2. Bottom Info Panel ---
@@ -155,7 +189,7 @@ public class PortfolioPanel extends JPanel {
                 if (rowsDeleted > 0) {
                     // Success feedback using CustomDialog
                     CustomDialog.show(this, "Project deleted successfully!", true);
-                    loadProjects(); // Refresh the gallery cards
+                    loadProjects(currentUserId); // Refresh the gallery cards
                 }
             
             } catch (Exception e) {
