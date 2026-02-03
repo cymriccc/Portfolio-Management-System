@@ -1,6 +1,10 @@
 package gui;
 
+import db.Database;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import javax.swing.*;
 import main.Main;
 
@@ -36,6 +40,30 @@ public class myFrame {
     sidebarProfileImg.setText("");
     }
 
+    public void loadExistingAvatar(String username) {
+        String sql = "SELECT profile_picture FROM users WHERE username = ?";
+        try (Connection conn = Database.getConnection();
+         PreparedStatement pst = conn.prepareStatement(sql)) {
+        
+        pst.setString(1, username);
+        ResultSet rs = pst.executeQuery();
+        
+        if (rs.next()) {
+            byte[] imgBytes = rs.getBytes("profile_picture");
+            if (imgBytes != null) {
+                ImageIcon icon = new ImageIcon(imgBytes);
+                Image img = icon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+                sidebarProfileImg.setIcon(new ImageIcon(img));
+
+                sidebarProfileImg.revalidate();
+                sidebarProfileImg.repaint();
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    }
+    
     public JFrame getFrame() {
         return frame;
     }

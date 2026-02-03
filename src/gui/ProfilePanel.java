@@ -4,6 +4,7 @@ import db.Database;
 import java.awt.*;
 import java.awt.event.*; // to handle file selection
 import java.io.File;
+import java.io.FileInputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,12 +16,14 @@ public class ProfilePanel extends JPanel {
     private JTextField nameField, courseField, emailField, idField;
     private JTextArea bioArea; // Changed to class level to access in save method
     private JLabel imageLabel;
+    private myFrame frameRef;
     private String selectedImagePath = "";
     private String currentUsername; // Store the username to know WHO to update
 
     private DashboardPanel dashRef;
 
     public ProfilePanel(myFrame frameObject, String username, DashboardPanel dashboard) {
+        this.frameRef = frameObject;
         this.currentUsername = username;
         this.dashRef = dashboard;
         setLayout(null);
@@ -87,31 +90,40 @@ public class ProfilePanel extends JPanel {
     }
 
     private void loadUserData() {
-        System.out.println("Attempting to load data for: " + currentUsername);
         try (Connection conn = Database.getConnection()) {
-            String sql = "SELECT full_name, student_id, course_year, email, bio FROM users WHERE username = ?";
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, currentUsername);
+        // ADD profile_picture to your SELECT statement
+        String sql = "SELECT full_name, student_id, course_year, email, bio, profile_picture FROM users WHERE username = ?";
+        PreparedStatement pst = conn.prepareStatement(sql);
+        pst.setString(1, currentUsername);
 
-            ResultSet rs = pst.executeQuery();
+        ResultSet rs = pst.executeQuery();
 
-            if (rs.next()) {
-                System.out.println("User found! Setting fields...");
-                nameField.setText(rs.getString("full_name"));
-                idField.setText(rs.getString("student_id"));
-                courseField.setText(rs.getString("course_year"));
-                emailField.setText(rs.getString("email"));
+        if (rs.next()) {
+            nameField.setText(rs.getString("full_name"));
+            idField.setText(rs.getString("student_id"));
+            courseField.setText(rs.getString("course_year"));
+            emailField.setText(rs.getString("email"));
+            String bio = rs.getString("bio");
+            bioArea.setText(bio != null ? bio : "");
 
-                String bio = rs.getString("bio");
-                bioArea.setText(bio != null ? bio : "");
-            } else {
-                System.out.println("No user found in DB for username: " + currentUsername);
+            // --- LOAD IMAGE FROM BLOB ---
+            byte[] imgBytes = rs.getBytes("profile_picture");
+            if (imgBytes != null) {
+                ImageIcon icon = new ImageIcon(imgBytes);
+                Image img = icon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
+                imageLabel.setIcon(new ImageIcon(img));
+                imageLabel.setText("");
+            
+            if (frameRef != null) {
+                    Image sidebarImg = icon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+                    frameRef.sidebarProfileImg.setIcon(new ImageIcon(sidebarImg));
+                }
             }
-        } catch (Exception e) {
-            System.out.println("Error loading profile data: " + e.getMessage());
-            e.printStackTrace();
         }
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
 
     // helper to create section headers
     private JLabel createSectionHeader(String text, int x, int y) {
@@ -168,20 +180,27 @@ public class ProfilePanel extends JPanel {
     // to open file explorer once the button is clicked
     private void chooseImage() {
         JFileChooser fileChooser = new JFileChooser();
-
-        // Filter to accept only image files
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Image Files", "jpg", "png", "jpeg");
-        fileChooser.setFileFilter(filter);
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Image Files", "jpg", "png", "jpeg"));
 
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
-            selectedImagePath = selectedFile.getAbsolutePath();
-            
-            ImageIcon icon = new ImageIcon(selectedImagePath);
-            Image img = icon.getImage().getScaledInstance(imageLabel.getWidth(), imageLabel.getHeight(), Image.SCALE_SMOOTH);
-            imageLabel.setIcon(new ImageIcon(img));
-            imageLabel.setText(""); 
-        }
+            String path = selectedFile.getAbsolutePath();
+
+        // 1. Update ProfilePanel Preview
+        ImageIcon icon = new ImageIcon(path);
+        Image img = icon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
+        imageLabel.setIcon(new ImageIcon(img));
+        imageLabel.setText(""); 
+
+        // 2. Update Sidebar Real-time (using the reference to myFrame)
+        // Ensure you have frameObject passed into your ProfilePanel constructor
+        if (frameRef != null) {
+                frameRef.updateSidebarProfile(path);
+            }
+
+        // 3. Save to Database
+        saveAvatarToDatabase(selectedFile);
+    }
     }
 
     // Helper to update the sidebar icon in the frame
@@ -247,4 +266,24 @@ public class ProfilePanel extends JPanel {
         });
         return btn;
     }
+
+    private void saveAvatarToDatabase(File file) {
+    String sql = "UPDATE users SET profile_picture = ? WHERE username = ?";
+
+    try (Connection conn = Database.getConnection();
+         PreparedStatement pst = conn.prepareStatement(sql);
+         FileInputStream fis = new FileInputStream(file)) {
+
+        pst.setBinaryStream(1, fis, (int) file.length()); // Stream the file into the BLOB column
+        pst.setString(2, currentUsername);
+
+        int result = pst.executeUpdate();
+        if (result > 0) {
+            CustomDialog.show(this, "Profile picture updated in database!", true);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        CustomDialog.show(this, "Error saving to database.", false);
+    }
+}
 }
