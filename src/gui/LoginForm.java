@@ -80,6 +80,20 @@ public class LoginForm extends JFrame {
         });
         add(btnLogin);
 
+        JButton btnForgot = new JButton("Forgot Password?");
+        btnForgot.setBounds(centerX, 480, fieldWidth, 20); 
+        btnForgot.setForeground(Main.TEXT_COLOR);
+        btnForgot.setContentAreaFilled(false);
+        btnForgot.setBorderPainted(false);
+        btnForgot.setFocusPainted(false);
+        btnForgot.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        btnForgot.addActionListener(e -> {
+            new PasswordRecovery(this).setVisible(true);
+        });
+
+        add(btnForgot);
+
         btnRegister = new JButton("No account? Create one");
         btnRegister.setBounds(centerX, 450, fieldWidth, 30);
         btnRegister.setForeground(Main.TEXT_COLOR);
