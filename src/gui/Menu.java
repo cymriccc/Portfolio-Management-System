@@ -28,7 +28,7 @@ public class Menu {
         }
 
         // --- TITLE LABEL ---
-        JLabel titleLabel = new JLabel("Student Portfolio");
+        JLabel titleLabel = new JLabel("Portfolio Management");
         titleLabel.setBounds(0, 180, 350, 40);
         titleLabel.setFont(new Font("Helvetica", Font.BOLD, 22));
         titleLabel.setForeground(Color.WHITE);

@@ -16,12 +16,13 @@ public class SettingsPanel extends JPanel {
         title.setForeground(Main.TEXT_COLOR);
         add(title);
 
-        JLabel badge = new JLabel("STUDENT PORTFOLIO SYSTEM BY SANA-OL", SwingConstants.CENTER);
-        badge.setBounds(40, 85, 250, 25);
+        JLabel badge = new JLabel("PORTFOLIO MANAGEMENT SYSTEM BY VANTAGE", SwingConstants.CENTER);
+        badge.setBounds(40, 85, 320, 25);
         badge.setOpaque(true); // to show background color
         badge.setBackground(Main.ACCENT_COLOR);
         badge.setForeground(Color.WHITE);
         badge.setFont(new Font("Helvetica", Font.BOLD, 10));
+        badge.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
         add(badge);
 
         JLabel subTitle = new JLabel("MEET THE DEVELOPERS");
