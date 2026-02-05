@@ -1,6 +1,6 @@
-# Student Portfolio Builder System
+# Vantage Portfolio Management System
 
-A desktop-based management system designed for students to organize, build, and sync their academic portfolios. Built with **Java Swing** and integrated with **MySQL** for persistent data management.
+A professional desktop-based management system designed for developers and creatives to organize, showcase, and sync their project portfolios. Built with **Java Swing** and integrated with **MySQL** for robust data persistence.
 
 > **Note:** This project is currently in **Active Development**. Features are being added and refined as part of my BSIT-MWA coursework at National University.
 
@@ -13,10 +13,9 @@ A desktop-based management system designed for students to organize, build, and 
 
 ## 🔒 Security & Validation
 This version implements strict data integrity checks to ensure high-quality database entries:
-* **Space Restriction**: Crtical fields like `Username`, `Password`, and `Student ID` block internal spaces to prevent credential errors.
-* **Regex Email Validation**: Ensure email addressses follow the standard `user@domain.com` format.
-* **Data Integrity**: Enforces specific formatting for Student IDs (numbers and dashes only).
-* **Password Requirements**: Minimum length validation (8+ characters) to encourage secure user accounts.
+* **Credential Formatting**: Critical fields like `Username` and `Password` block internal spaces to prevent common login errors.
+* **Validation Engines**: Implements Regex-based email verification and minimum password length requirements.
+* **Binary Data Management**: Securely handles raw file data (BLOBs) for project uploads to ensure files remain accessible and uncorrupted.
 
 ## 🛠️ Tech Stack
 * **Language**: Java
@@ -56,6 +55,8 @@ git clone https://github.com/cymriccc/Student-Portfolio-System.git
 - [x] Finalize Settings & Profile Page
 - [ ] Add function to Dashboard Overview
 - [ ] Customize scroll bar and view image in discovery portfolio
+- [ ] Add advanced filtering and search for the Project Gallery
+- [ ] Direct "Open/Download" functionality for PDF assets
 
 ## ⚖️ License
 This project is licensed under the MIT License — see the LICENSE file for details.
