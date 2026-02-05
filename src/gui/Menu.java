@@ -12,12 +12,17 @@ public class Menu {
         // --- LOGO IMAGE ---
         try {
             ImageIcon logoIcon = new ImageIcon("logo.png");
-            int logoSize = 150;
+            int logoSize = 250; 
+            int menuWidth = 350;
+            int xCentered = (menuWidth - logoSize) / 2;
+
             Image image = logoIcon.getImage().getScaledInstance(logoSize, logoSize, Image.SCALE_SMOOTH);
             logoIcon = new ImageIcon(image);
+
             JLabel logoLabel = new JLabel(logoIcon);
-            logoLabel.setBounds(85, 10, logoSize, logoSize); // Centered in 350 width
+            logoLabel.setBounds(xCentered, -20, logoSize, logoSize); 
             menuPanel.add(logoLabel);
+            
         } catch (Exception e) {
             System.out.println("Logo file not found. Check your project folder.");
         }
