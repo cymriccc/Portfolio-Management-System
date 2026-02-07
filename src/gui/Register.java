@@ -96,7 +96,7 @@ public class Register extends JFrame {
 
         // Buttons
         btnRegister = new JButton("SIGN UP");
-        btnRegister.setBounds(centerX, 650, fieldWidth, 50);
+        btnRegister.setBounds(centerX, 645, fieldWidth, 50);
         btnRegister.setBackground(Main.ACCENT_COLOR);
         btnRegister.setForeground(Color.WHITE);
         btnRegister.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -116,7 +116,7 @@ public class Register extends JFrame {
         add(btnRegister);
 
         btnLogin = new JButton("Already have an account? Login");
-        btnLogin.setBounds(centerX, 660, fieldWidth, 30);
+        btnLogin.setBounds(centerX, 695, fieldWidth, 30);
         btnLogin.setForeground(Main.TEXT_COLOR);
         btnLogin.setContentAreaFilled(false);
         btnLogin.setFocusPainted(false);
