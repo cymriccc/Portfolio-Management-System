@@ -14,6 +14,8 @@ public class AdminDashboard extends JFrame {
     private JPanel activeIndicator;
     private JTable userTable, postTable; 
     private DefaultTableModel userModel, postModel;
+    private JLabel lblTotalUsers;
+    private JLabel lblTotalPortfolios;
 
     public AdminDashboard() {
         setTitle("Vantage Admin Console");
@@ -45,6 +47,7 @@ public class AdminDashboard extends JFrame {
 
         // Sidebar Navigation Buttons
         JButton btnDash = createSidebarBtn("Dashboard Management", 120);
+        btnDash.setForeground(Main.ACCENT_COLOR);
         JButton btnUsers = createSidebarBtn("Manage Users", 170);
         JButton btnPosts = createSidebarBtn("Manage Posts", 220);
         JButton btnLogout = createSidebarBtn("Logout", 700);
@@ -70,19 +73,50 @@ public class AdminDashboard extends JFrame {
 
         // Switch Logic
         btnDash.addActionListener(e -> {
+            updateSummaryCounts();
             showPanel(dashPanel);
-        activeIndicator.setLocation(0, 120);
+            activeIndicator.setLocation(0, 125); 
+    
+            btnDash.setForeground(Main.ACCENT_COLOR);
+            btnUsers.setForeground(new Color(0xD1D8E0));
+            btnPosts.setForeground(new Color(0xD1D8E0));
         });
 
         btnUsers.addActionListener(e -> {
+            loadUserData();
             showPanel(userPanel);
-            activeIndicator.setLocation(0, 170);
+            activeIndicator.setLocation(0, 175);
+    
+            btnUsers.setForeground(Main.ACCENT_COLOR);
+            btnDash.setForeground(new Color(0xD1D8E0));
+            btnPosts.setForeground(new Color(0xD1D8E0));
         });
 
         btnPosts.addActionListener(e -> {
+            refreshPostTable();
             showPanel(postPanel);
-            activeIndicator.setLocation(0, 220);
+            activeIndicator.setLocation(0, 225);
+    
+            btnPosts.setForeground(Main.ACCENT_COLOR);
+            btnDash.setForeground(new Color(0xD1D8E0));
+            btnUsers.setForeground(new Color(0xD1D8E0));
         });
+
+        // --- Hover Effects for Logout ---
+        btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+            // Lighten the background slightly or change text color
+            btnLogout.setContentAreaFilled(true); 
+            btnLogout.setBackground(new Color(0x3E444A)); // A slightly lighter dark shade
+            btnLogout.setForeground(new Color(0xE74C3C)); // Highlight text in your blue accent
+        }
+
+        public void mouseExited(java.awt.event.MouseEvent e) {
+            // Return to original "Slate" look
+            btnLogout.setContentAreaFilled(false);
+            btnLogout.setForeground(new Color(0xD1D8E0));
+        }
+    });
 
         btnLogout.addActionListener(e -> logout());
 
@@ -112,8 +146,8 @@ public class AdminDashboard extends JFrame {
         int totalUsers = getTotalCount("users");
         int totalPosts = getTotalCount("portfolios");
 
-        JPanel cardUsers = createStatCard("Total Registered Users", String.valueOf(totalUsers), 30, 90, new Color(0x3498DB));
-        JPanel cardPosts = createStatCard("Total Portfolios", String.valueOf(totalPosts), 330, 90, new Color(0x2ECC71));
+        JPanel cardUsers = createStatCard("Total Registered Users", String.valueOf(totalUsers), 30, 90, new Color(0x3498DB), true);
+        JPanel cardPosts = createStatCard("Total Portfolios", String.valueOf(totalPosts), 330, 90, new Color(0x2ECC71), false);
     
         panel.add(cardUsers);
         panel.add(cardPosts);
@@ -168,6 +202,47 @@ public class AdminDashboard extends JFrame {
         panel.add(graphBox);
 
         return panel;
+    }
+
+    // Helper to initialize the labels correctly
+    private JPanel createStatCard(String title, String value, int x, int y, Color accent, boolean isUserCard) {
+        JPanel card = new JPanel(null);
+        card.setBounds(x, y, 230, 100);
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createMatteBorder(0, 5, 0, 0, accent));
+
+        JLabel lblT = new JLabel(title);
+        lblT.setFont(new Font("Helvetica", Font.PLAIN, 12));
+        lblT.setForeground(Color.GRAY);
+        lblT.setBounds(15, 15, 200, 20);
+        card.add(lblT);
+
+        JLabel lblV = new JLabel(value);
+        lblV.setFont(new Font("Helvetica", Font.BOLD, 32));
+        lblV.setBounds(15, 40, 200, 40);
+        card.add(lblV);
+
+        // Link the labels to our class variables so updateSummaryCounts can find them
+        if (isUserCard) lblTotalUsers = lblV;
+        else lblTotalPortfolios = lblV;
+
+        return card;
+    }
+
+    public void updateSummaryCounts() {
+        // Fetch direct from DB and update the UI labels immediately
+        lblTotalPortfolios.setText(String.valueOf(getTotalCount("portfolios")));
+        lblTotalUsers.setText(String.valueOf(getTotalCount("users")));
+        dashPanel.repaint(); // Force graph to redraw too
+    }
+
+    private int getTotalCount(String tableName) {
+        try (Connection conn = Database.getConnection()) {
+            String sql = "SELECT COUNT(*) FROM " + tableName;
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
     }
 
     // --- 2. MANAGE POSTS (Portfolio Table) ---
@@ -260,7 +335,7 @@ public class AdminDashboard extends JFrame {
         return panel;
     }
 
-    // --- 3. MANAGE USERS (Your Original Code) ---
+    // --- MANAGE USERS  ---
     private JPanel createUserManager() {
         JPanel panel = new JPanel(null);
         panel.setBackground(Main.BG_COLOR);
@@ -327,21 +402,22 @@ public class AdminDashboard extends JFrame {
     // --- Helper for Sidebar Buttons ---
     private JButton createSidebarBtn(String text, int y) {
         JButton btn = new JButton(text);
-        btn.setBounds(0, y, 250, 50); // Standardized height to 50
+        btn.setBounds(0, y, 250, 50);
         btn.setForeground(new Color(0xD1D8E0));
         btn.setFont(new Font("Helvetica", Font.BOLD, 14));
         btn.setContentAreaFilled(false);
-        btn.setBorderPainted(true); // Enabled to show the Matte Border
+        btn.setBorderPainted(true);
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setVerticalAlignment(SwingConstants.CENTER);
     
-        // Initial padding (Matches your Menu.java style)
         btn.setBorder(BorderFactory.createEmptyBorder(0, 40, 0, 0));
     
         return btn;
     }
 
+    // --- LOGOUT FUNCTION ---
     private void logout() {
         boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to logout?");
 
@@ -355,6 +431,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
+    // --- Helper to refresh the posts table with the latest data from the database ---
     private void refreshPostTable() {
         // Clear existing rows first
        postModel.setRowCount(0);
@@ -381,6 +458,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
+    // --- Helper to load user data into the table ---
     private void loadUserData() {
         // 1. Clear the table first so we don't duplicate rows
         if (userModel == null) return;
@@ -410,6 +488,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
+    // --- Helper to delete the selected user from the database and refresh the table ---
     private void deleteSelectedUser() {
         int selectedRow = userTable.getSelectedRow();
         if (selectedRow == -1) {
@@ -437,6 +516,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
+    // --- Helper to get monthly activity data for the graph ---
     private int[] getMonthlyActivityData() {
         int[] monthlyCounts = new int[6]; // To store counts for the last 6 months
         try (Connection conn = Database.getConnection()) {
@@ -457,37 +537,23 @@ public class AdminDashboard extends JFrame {
         return monthlyCounts;
     }
 
-    private int getTotalCount(String tableName) {
-        try (Connection conn = Database.getConnection()) {
-            String sql = "SELECT COUNT(*) FROM " + tableName;
-            ResultSet rs = conn.createStatement().executeQuery(sql);
-            if (rs.next()) return rs.getInt(1);
-        } catch (Exception e) {
+    // --- Helper to get total portfolios count for the dashboard card ---
+    public static int getTotalPortfolios() {
+        String sql = "SELECT COUNT(*) FROM portfolios";
+        // Add 'Database.' before getConnection()
+        try (Connection conn = Database.getConnection(); 
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return 0;
     }
 
-    private JPanel createStatCard(String title, String value, int x, int y, Color accent) {
-        JPanel card = new JPanel(null);
-        card.setBounds(x, y, 230, 100);
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createMatteBorder(0, 5, 0, 0, accent)); // Accent line on the left
-
-        JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("Helvetica", Font.PLAIN, 12));
-        lblTitle.setForeground(Color.GRAY);
-        lblTitle.setBounds(15, 15, 200, 20);
-        card.add(lblTitle);
-
-        JLabel lblValue = new JLabel(value);
-        lblValue.setFont(new Font("Helvetica", Font.BOLD, 32));
-        lblValue.setBounds(15, 40, 200, 40);
-        card.add(lblValue);
-
-        return card;
-    }
-
+    // --- Helper to get total users count for the dashboard card ---
     private void addWindowControls() {
         JLayeredPane lp = this.getLayeredPane();
 
