@@ -225,15 +225,21 @@ public class Register extends JFrame {
 
 
         String nameRegex = "^[a-zA-Z-]{2,30}$";
-        if (!first.matches(nameRegex) || !middle.matches(nameRegex) || !last.matches(nameRegex)) {
-            errors.append("• Names must be 2-30 letters and '-' only.\n");
+        if (!first.matches(nameRegex)) {
+            errors.append("• First name must be 2-30 letters and '-' only.\n");
+        }
+        if (!middle.isEmpty() && !middle.matches(nameRegex)) {
+            errors.append("• Middle name must be 2-30 letters and '-' only if provided.\n");
+        }
+        if (!last.matches(nameRegex)) {
+            errors.append("• Last name must be 2-30 letters and '-' only.\n");
         }
         if (errors.length() > 0) {
         CustomDialog.show(this, errors.toString(), false);
         return;
         }
-        if (!studentID.matches("[0-9-]+")) {
-            CustomDialog.show(this, "Student ID should only contain numbers and dashes!", false);
+        if (!studentID.matches("\\d{4}-\\d{4}")) {
+            CustomDialog.show(this, "Student ID must be in the format 0000-0000 (e.g., 2025-0000)", false);
             return;
         }
         if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {

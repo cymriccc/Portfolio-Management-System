@@ -10,6 +10,7 @@ import main.Main;
 public class PasswordRecovery extends JDialog {
     private JTextField txtUser, txtEmail;
     private JPasswordField txtNewPass;
+    private JPasswordField txtConfirmPass;
     private JButton btnVerify, btnReset;
     private JTextField txtAnswer;
 
@@ -212,36 +213,57 @@ public class PasswordRecovery extends JDialog {
         add(title);
 
         JLabel lblPass = new JLabel("New Password");
-        lblPass.setBounds(centerX, 120, 150, 20);
+        lblPass.setBounds(centerX, 85, 150, 20);
         lblPass.setForeground(Main.TEXT_COLOR);
         add(lblPass);
 
-        txtNewPass = new JPasswordField();
-        txtNewPass.setBounds(centerX, 145, fieldWidth, 45);
-        txtNewPass.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0xD1D8E0), 1),
-            new EmptyBorder(0, 15, 0, 15)
-        ));
+        txtNewPass = createStyledPasswordField(); // Using a helper for cleaner code
+        txtNewPass.setBounds(centerX, 110, fieldWidth, 45);
         add(txtNewPass);
 
+        JLabel lblConfirm = new JLabel("Confirm Password");
+        lblConfirm.setBounds(centerX, 170, 150, 20);
+        lblConfirm.setForeground(Main.TEXT_COLOR);
+        add(lblConfirm);
+
+        txtConfirmPass = createStyledPasswordField();
+        txtConfirmPass.setBounds(centerX, 195, fieldWidth, 45);
+        add(txtConfirmPass);
+
         btnReset = new JButton("UPDATE PASSWORD");
-        btnReset.setBounds(centerX, 210, fieldWidth, 45);
+        btnReset.setBounds(centerX, 270, fieldWidth, 45);
         btnReset.setBackground(new Color(0x27ae60));
         btnReset.setForeground(Color.WHITE);
         btnReset.setFont(new Font("Helvetica", Font.BOLD, 14));
         
         btnReset.addActionListener(e -> {
             String newPass = new String(txtNewPass.getPassword());
+            String confirmPass = new String(txtConfirmPass.getPassword());
+
+            if (!newPass.equals(confirmPass)) {
+            CustomDialog.show(this, "Passwords do not match!", false);
+            return;
+        }
             if (!newPass.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$")) {
-                CustomDialog.show(this, "Must be 8+ chars with Upper, Lower, and Number.", false);
-                return;
-            }
-            updatePassword(username, newPass);
+            CustomDialog.show(this, "Must be 8+ chars with Upper, Lower, and Number.", false);
+            return;
+        }
+
+        updatePassword(username, newPass);
         });
         add(btnReset);
 
         repaint();
         revalidate();
+    }
+    
+    private JPasswordField createStyledPasswordField() {
+        JPasswordField field = new JPasswordField();
+        field.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD1D8E0), 1),
+            new EmptyBorder(0, 15, 0, 15)
+        ));
+        return field;
     }
 
     private void updatePassword(String username, String newPassword) {
