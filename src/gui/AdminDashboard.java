@@ -3,19 +3,21 @@ package gui;
 import db.Database;
 import java.awt.*;
 import java.sql.*;
-import java.util.Vector;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import main.Main;
 
 public class AdminDashboard extends JFrame {
-    private JTable userTable;
-    private DefaultTableModel tableModel;
+    private JPanel contentArea;
+    private JPanel dashPanel, userPanel, postPanel;
+    private JPanel activeIndicator;
+    private JTable userTable, postTable; 
+    private DefaultTableModel userModel, postModel;
 
     public AdminDashboard() {
-        setTitle("Admin Panel - Student Portfolio System");
-        setSize(1000, 650);
+        setTitle("Vantage Admin Console");
+        setSize(1200, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setUndecorated(true);
@@ -24,35 +26,10 @@ public class AdminDashboard extends JFrame {
 
         // --- Sidebar ---
         JPanel sidebar = new JPanel();
-        sidebar.setBounds(0, 0, 250, 650);
+        sidebar.setBounds(0, 0, 250, 800);
         sidebar.setBackground(Main.DARK_PANEL);
         sidebar.setLayout(null);
         add(sidebar);
-
-        JPanel activeIndicator = new JPanel();
-        activeIndicator.setBounds(0, 120, 5, 40);
-        activeIndicator.setBackground(Main.ACCENT_COLOR); 
-        sidebar.add(activeIndicator);
-
-        JButton btnUsers = new JButton("Manage Users");
-        btnUsers.setBounds(20, 120, 210, 40);
-        btnUsers.setForeground(Color.WHITE);
-        btnUsers.setContentAreaFilled(false);
-        btnUsers.setFocusPainted(false);
-        btnUsers.setBorderPainted(false);
-        btnUsers.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnUsers.setHorizontalAlignment(SwingConstants.LEFT);
-
-        btnUsers.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-               btnUsers.setForeground(Main.ACCENT_COLOR); // Turns red on hover
-            }
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btnUsers.setForeground(Color.WHITE);
-           }
-        });
-
-        sidebar.add(btnUsers);
 
         JLabel lblAdmin = new JLabel("ADMIN PORTAL");
         lblAdmin.setForeground(Color.WHITE);
@@ -60,169 +37,455 @@ public class AdminDashboard extends JFrame {
         lblAdmin.setBounds(40, 50, 200, 30);
         sidebar.add(lblAdmin);
 
-        // --- Sidebar Logout Button ---
-        JButton btnLogout = new JButton("Logout");
-        btnLogout.setBounds(20, 580, 210, 40); // Positioned near the bottom of the 650px height
-        btnLogout.setForeground(new Color(0xECF0F1)); // Light Ice text
-        btnLogout.setFont(new Font("Helvetica", Font.BOLD, 14));
-        btnLogout.setFocusPainted(false);
-        btnLogout.setBorderPainted(false);
-        btnLogout.setContentAreaFilled(false);
-        btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnLogout.setHorizontalAlignment(SwingConstants.LEFT);
+        // Inside Sidebar panel setup
+        activeIndicator = new JPanel();
+        activeIndicator.setBounds(0, 120, 5, 40); // Matches the first button's Y
+        activeIndicator.setBackground(Main.ACCENT_COLOR); 
+        sidebar.add(activeIndicator);
 
-        // Hover Effect
-        btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-               btnLogout.setForeground(new Color(0xE74C3C)); // Turns red on hover
-            }
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btnLogout.setForeground(new Color(0xECF0F1));
-           }
-        });
+        // Sidebar Navigation Buttons
+        JButton btnDash = createSidebarBtn("Dashboard Management", 120);
+        JButton btnUsers = createSidebarBtn("Manage Users", 170);
+        JButton btnPosts = createSidebarBtn("Manage Posts", 220);
+        JButton btnLogout = createSidebarBtn("Logout", 700);
 
-        // Logout Action
-        btnLogout.addActionListener(e -> {
-            // Call your new custom confirmation dialog
-            boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to logout?");
-    
-            if (confirm) {
-                // Show a quick "Goodbye" message using your standard success dialog
-                CustomDialog.show(this, "Logged out successfully!", true);
-            
-                new LoginForm().setVisible(true);
-                this.dispose();
-            }
-        });
-
+        sidebar.add(btnDash);
+        sidebar.add(btnUsers);
+        sidebar.add(btnPosts);
         sidebar.add(btnLogout);
 
-        // --- Main Content Area ---
-        JLabel lblTitle = new JLabel("Registered Users Management");
+        // --- Content Area Setup ---
+        contentArea = new JPanel(null);
+        contentArea.setBounds(250, 0, 950, 800);
+        contentArea.setBackground(Main.BG_COLOR);
+        add(contentArea);
+
+        // Initialize Panels
+        dashPanel = createDashboardManagement();
+        userPanel = createUserManager();
+        postPanel = createPostManager();
+
+        // Default View
+        showPanel(dashPanel);
+
+        // Switch Logic
+        btnDash.addActionListener(e -> {
+            showPanel(dashPanel);
+        activeIndicator.setLocation(0, 120);
+        });
+
+        btnUsers.addActionListener(e -> {
+            showPanel(userPanel);
+            activeIndicator.setLocation(0, 170);
+        });
+
+        btnPosts.addActionListener(e -> {
+            showPanel(postPanel);
+            activeIndicator.setLocation(0, 220);
+        });
+
+        btnLogout.addActionListener(e -> logout());
+
+        addWindowControls();
+    }
+
+    private void showPanel(JPanel panel) {
+        contentArea.removeAll();
+        panel.setBounds(0, 0, 950, 800);
+        contentArea.add(panel);
+    
+        // Safety check to ensure the UI refreshes
+        contentArea.repaint();
+        contentArea.revalidate();
+    }
+
+    // --- 1. DASHBOARD MANAGEMENT (The Graph) ---
+    private JPanel createDashboardManagement() {
+        JPanel panel = new JPanel(null);
+        panel.setBackground(Main.BG_COLOR);
+
+        JLabel lblTitle = new JLabel("System Analytics");
         lblTitle.setFont(new Font("Helvetica", Font.BOLD, 28));
-        lblTitle.setForeground(Main.TEXT_COLOR);
-        lblTitle.setBounds(280, 40, 500, 40);
-        add(lblTitle);
+        lblTitle.setBounds(30, 30, 500, 40);
+        panel.add(lblTitle);
 
-        JLabel lblSearch = new JLabel("Search by Name or ID:");
-        lblSearch.setBounds(280, 95, 200, 20);
-        lblSearch.setForeground(Main.TEXT_COLOR);
-        lblSearch.setFont(new Font("Helvetica", Font.BOLD, 12));
-        add(lblSearch);
+        int totalUsers = getTotalCount("users");
+        int totalPosts = getTotalCount("portfolios");
 
-        // Main Search Field
+        JPanel cardUsers = createStatCard("Total Registered Users", String.valueOf(totalUsers), 30, 90, new Color(0x3498DB));
+        JPanel cardPosts = createStatCard("Total Portfolios", String.valueOf(totalPosts), 330, 90, new Color(0x2ECC71));
+    
+        panel.add(cardUsers);
+        panel.add(cardPosts);
+
+        JPanel graphBox = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // 1. Fetch REAL data from DB
+                int[] activity = getMonthlyActivityData();
+                String[] monthNames = new String[6];
+                
+                // Get current month to label backwards
+                java.time.LocalDate now = java.time.LocalDate.now();
+                for (int i = 0; i < 6; i++) {
+                    // Subtract months to get the name for each bar
+                    java.time.Month m = now.minusMonths(5 - i).getMonth();
+                    // Convert to a 3-letter string (e.g., "JAN")
+                    monthNames[i] = m.name().substring(0, 3);
+                }
+
+                // 2. Draw Axis
+                g2.setColor(Color.GRAY);
+                g2.drawLine(50, 230, 450, 230); // X-Axis
+                g2.drawLine(50, 40, 50, 230);   // Y-Axis
+
+                // 3. Draw Bars based on real counts
+                for (int i = 0; i < activity.length; i++) {
+                    // Scale bar height (9 * 15 = 135 pixels tall)
+                    int barHeight = Math.min(activity[i] * 15, 170); 
+                
+                    g2.setColor(Main.ACCENT_COLOR); // Use a consistent color for bars
+                    g2.fillRect(70 + (i * 60), 230 - barHeight, 40, barHeight);
+                
+                    // Labels - Adjusted Y to 250 to keep them clear of the axis
+                    g2.setColor(Main.TEXT_COLOR);
+                    g2.setFont(new Font("Helvetica", Font.BOLD, 12));
+                    g2.drawString(monthNames[i], 75 + (i * 60), 250);
+                
+                    // Count above bar
+                    g2.setFont(new Font("Helvetica", Font.PLAIN, 11));
+                    g2.drawString(String.valueOf(activity[i]), 82 + (i * 60), 220 - barHeight);
+                }
+            }
+        };
+        graphBox.setBounds(30, 220, 500, 280);
+        graphBox.setBackground(Color.WHITE);
+        graphBox.setBorder(BorderFactory.createTitledBorder("Monthly Portfolio Activity"));
+        panel.add(graphBox);
+
+        return panel;
+    }
+
+    // --- 2. MANAGE POSTS (Portfolio Table) ---
+    private JPanel createPostManager() {
+        JPanel panel = new JPanel(null);
+        panel.setBackground(Main.BG_COLOR);
+
+        String[] cols = {"ID", "Project Title", "Owner", "Status"};
+        postModel = new DefaultTableModel(cols, 0); 
+        postTable = new JTable(postModel);          // Use the global variable
+
+        JLabel lblTitle = new JLabel("Portfolio Moderation");
+        lblTitle.setFont(new Font("Helvetica", Font.BOLD, 28));
+        lblTitle.setBounds(30, 40, 500, 40);
+        panel.add(lblTitle);
+
+        JLabel lblSearch = new JLabel("Search Projects:");
+        lblSearch.setBounds(30, 85, 200, 20);
+        panel.add(lblSearch);
+
         JTextField txtSearch = new JTextField();
-        txtSearch.setBounds(280, 120, 450, 35); 
-        txtSearch.setBackground(Color.WHITE);
+        txtSearch.setBounds(30, 110, 400, 35);
         txtSearch.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0xD1D8E0), 1),
+            BorderFactory.createLineBorder(new Color(0xD1D8E0)),
             BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
-        txtSearch.setBackground(Color.WHITE);
-        add(txtSearch);
+        panel.add(txtSearch);
 
+        postTable.setRowHeight(30);
+        
+        // Live Search Sorter
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(postModel);
+        postTable.setRowSorter(sorter);
+
+        txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            private void filter() {
+                String text = txtSearch.getText();
+                if (text.trim().length() == 0) sorter.setRowFilter(null);
+                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1, 2)); // Search Title and Owner
+            }
+        });
+
+        refreshPostTable();
+
+        JScrollPane sp = new JScrollPane(postTable);
+        sp.setBounds(30, 160, 880, 350);
+        panel.add(sp);
+
+        // --- 3. Delete Action ---
+        JButton btnDeletePost = new JButton("DELETE POST");
+        btnDeletePost.setBounds(30, 530, 150, 40);
+        btnDeletePost.setBackground(new Color(0xE74C3C));
+        btnDeletePost.setForeground(Color.WHITE);
+        btnDeletePost.setFocusPainted(false);
+        btnDeletePost.setBorderPainted(false);
+        btnDeletePost.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        btnDeletePost.addActionListener(e -> {
+            int selectedRow = postTable.getSelectedRow();
+            if (selectedRow == -1) {
+                CustomDialog.show(this, "Please select a project to delete.", false);
+               return;
+            }
+
+           // Convert view index to model index (important when searching!)
+            int modelRow = postTable.convertRowIndexToModel(selectedRow);
+            int postId = Integer.parseInt(postModel.getValueAt(modelRow, 0).toString());
+
+            boolean confirm = CustomDialog.showConfirm(this, "Permanently delete this project?");
+            if (confirm) {
+                try (Connection conn = Database.getConnection()) {
+                    String sql = "DELETE FROM portfolios WHERE id = ?";
+                    PreparedStatement pst = conn.prepareStatement(sql);
+                    pst.setInt(1, postId);
+                    pst.executeUpdate();
+                    
+                    postModel.removeRow(modelRow);
+                    CustomDialog.show(this, "Project removed.", true);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    CustomDialog.show(this, "Database error!", false);
+                }
+            }
+        });
+        panel.add(btnDeletePost);
+
+        return panel;
+    }
+
+    // --- 3. MANAGE USERS (Your Original Code) ---
+    private JPanel createUserManager() {
+        JPanel panel = new JPanel(null);
+        panel.setBackground(Main.BG_COLOR);
+
+        JLabel lblTitle = new JLabel("User Management");
+        lblTitle.setFont(new Font("Helvetica", Font.BOLD, 28));
+        lblTitle.setBounds(30, 40, 500, 40);
+        panel.add(lblTitle);
+
+        // --- Search Field ---
+        JLabel lblSearch = new JLabel("Search Users:");
+        lblSearch.setBounds(30, 85, 200, 20);
+        panel.add(lblSearch);
+
+        JTextField txtSearch = new JTextField();
+        txtSearch.setBounds(30, 110, 400, 35);
+        txtSearch.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD1D8E0)),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        panel.add(txtSearch);
+
+        // --- Table Setup ---
+        String[] columns = {"ID", "Name", "Student ID", "Role", "Email"};
+        userModel = new DefaultTableModel(columns, 0); // Use global userModel
+        userTable = new JTable(userModel);            // Use global userTable
+        userTable.setRowHeight(30);
+
+        // Add Live Filter
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(userModel);
+        userTable.setRowSorter(sorter);
+        txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filter(); }
+            private void filter() {
+                String text = txtSearch.getText();
+                if (text.trim().length() == 0) sorter.setRowFilter(null);
+                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1, 2));
+            }
+        });
+
+        // Fetch initial data
+        loadUserData(); 
+
+        JScrollPane sp = new JScrollPane(userTable);
+        sp.setBounds(30, 160, 880, 350); 
+        panel.add(sp);
+
+        // --- Delete Button ---
         JButton btnDelete = new JButton("DELETE USER");
-        btnDelete.setBounds(840, 530, 120, 40);
-        btnDelete.setBackground(new Color(0xE74C3C));              
+        btnDelete.setBounds(30, 530, 150, 40);
+        btnDelete.setBackground(new Color(0xE74C3C));
         btnDelete.setForeground(Color.WHITE);
         btnDelete.setFocusPainted(false);
         btnDelete.setBorderPainted(false);
         btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        btnDelete.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-               btnDelete.setBackground(Color.RED.brighter());
-            }
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btnDelete.setBackground(new Color(0xE74C3C));
-           }
-        });
-
         btnDelete.addActionListener(e -> deleteSelectedUser());
-        add(btnDelete);
+        panel.add(btnDelete);
 
-        // Setup Table
-        tableModel = new DefaultTableModel(new String[]{"ID", "Name", "Student ID", "Role", "Email"}, 0);
-        userTable = new JTable(tableModel);
-        userTable.setRowHeight(30);
-        userTable.setSelectionBackground(Main.ACCENT_COLOR);
+        return panel;
+    }
+
+    // --- Helper for Sidebar Buttons ---
+    private JButton createSidebarBtn(String text, int y) {
+        JButton btn = new JButton(text);
+        btn.setBounds(0, y, 250, 50); // Standardized height to 50
+        btn.setForeground(new Color(0xD1D8E0));
+        btn.setFont(new Font("Helvetica", Font.BOLD, 14));
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(true); // Enabled to show the Matte Border
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setHorizontalAlignment(SwingConstants.LEFT);
+    
+        // Initial padding (Matches your Menu.java style)
+        btn.setBorder(BorderFactory.createEmptyBorder(0, 40, 0, 0));
+    
+        return btn;
+    }
+
+    private void logout() {
+        boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to logout?");
+
+        if (confirm) {
+            // Show success message
+            CustomDialog.show(this, "Logged out successfully!", true);
+
+            // Open Login and close Admin Dashboard
+            new LoginForm().setVisible(true);
+            this.dispose();
+        }
+    }
+
+    private void refreshPostTable() {
+        // Clear existing rows first
+       postModel.setRowCount(0);
+
+        try (Connection conn = Database.getConnection()) {
+           // Query to join portfolios and users to get the owner's name
+            String sql = "SELECT p.id, p.project_name, u.username, p.status " +
+                     "FROM portfolios p " +
+                     "JOIN users u ON p.user_id = u.id";
         
-
-        // Initialize the Sorter
-        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
-        userTable.setRowSorter(sorter);
-
-        // Add the "Live" Filter Logic
-        txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { filter(); }
-           public void removeUpdate(javax.swing.event.DocumentEvent e) { filter(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { filter(); }
-
-            private void filter() {
-                String text = txtSearch.getText();
-                if (text.trim().length() == 0) {
-                    sorter.setRowFilter(null);
-                } else {
-                    // Filters based on the "Name" (Index 1) or "Student ID" (Index 2) columns
-                    sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1, 2));
-                }
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+        
+            while(rs.next()){
+                postModel.addRow(new Object[]{
+                    rs.getInt("id"), 
+                    rs.getString("project_name"), 
+                    rs.getString("username"), 
+                    rs.getString("status")
+                });
             }
-        });
-
-        JScrollPane scrollPane = new JScrollPane(userTable);
-        scrollPane.setBounds(280, 180, 680, 330);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0)));
-        add(scrollPane);
-
-        loadUserData(); // Fetch from MySQL
-        addWindowControls();
+        } catch (Exception e) {
+            e.printStackTrace();
+                CustomDialog.show(this, "Failed to load projects.", false);
+        }
     }
 
     private void loadUserData() {
+        // 1. Clear the table first so we don't duplicate rows
+        if (userModel == null) return;
+        userModel.setRowCount(0); 
+
         try (Connection conn = Database.getConnection()) {
+            // 2. The SQL query to get your registered students
             String sql = "SELECT id, full_name, student_id, role, email FROM users";
             PreparedStatement pst = conn.prepareStatement(sql);
             ResultSet rs = pst.executeQuery();
 
+            // 3. Loop through the results and add them to the table
             while (rs.next()) {
-                Vector<String> row = new Vector<>();
-                row.add(rs.getString("id"));
-                row.add(rs.getString("full_name"));
-                row.add(rs.getString("student_id"));
-                row.add(rs.getString("role"));
-                row.add(rs.getString("email"));
-                tableModel.addRow(row);
+                Object[] row = {
+                    rs.getString("id"),
+                    rs.getString("full_name"),
+                    rs.getString("student_id"),
+                    rs.getString("role"),
+                    rs.getString("email")
+                };
+               userModel.addRow(row);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+           e.printStackTrace();
+            // Just in case there's an error, show a message
+            System.out.println("Error loading users: " + e.getMessage());
         }
     }
 
     private void deleteSelectedUser() {
         int selectedRow = userTable.getSelectedRow();
         if (selectedRow == -1) {
-           CustomDialog.show(this, "Please select a user first!", false);
+           CustomDialog.show(this, "Please select a user to delete!", false);
             return;
         }
 
-        // Get the ID from the first column of the selected row
-        String userId = tableModel.getValueAt(selectedRow, 0).toString();
-    
-        try (Connection conn = Database.getConnection()) {
-            String sql = "DELETE FROM users WHERE id = ?";
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, userId);
-            pst.executeUpdate();
+        // Convert view index to model index (important for sorted/filtered tables)
+        int modelRow = userTable.convertRowIndexToModel(selectedRow);
+       String userId = userModel.getValueAt(modelRow, 0).toString();
 
-            tableModel.removeRow(selectedRow);
-        
-            // Show success custom dialog
-            CustomDialog.show(this, "User successfully removed.", true);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            // Show error custom dialog
-            CustomDialog.show(this, "Database error: Could not delete user.", false);
+        if (CustomDialog.showConfirm(this, "Are you sure you want to delete this user?")) {
+           try (Connection conn = Database.getConnection()) {
+                String sql = "DELETE FROM users WHERE id = ?";
+                PreparedStatement pst = conn.prepareStatement(sql);
+                pst.setString(1, userId);
+                pst.executeUpdate();
+
+                userModel.removeRow(modelRow);
+                CustomDialog.show(this, "User deleted successfully.", true);
+            } catch (Exception e) {
+                e.printStackTrace();
+                CustomDialog.show(this, "Error deleting user.", false);
+           }
         }
+    }
+
+    private int[] getMonthlyActivityData() {
+        int[] monthlyCounts = new int[6]; // To store counts for the last 6 months
+        try (Connection conn = Database.getConnection()) {
+            // SQL query to count uploads per month for the current year
+            String sql = "SELECT MONTH(upload_date) as m, COUNT(*) as c FROM portfolios " +
+                         "WHERE YEAR(upload_date) = YEAR(CURDATE()) " +
+                         "GROUP BY MONTH(upload_date) ORDER BY m DESC LIMIT 6";
+        
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+            int i = 5; // Start from the right-most bar
+            while (rs.next() && i >= 0) {
+                monthlyCounts[i] = rs.getInt("c");
+                i--;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return monthlyCounts;
+    }
+
+    private int getTotalCount(String tableName) {
+        try (Connection conn = Database.getConnection()) {
+            String sql = "SELECT COUNT(*) FROM " + tableName;
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    private JPanel createStatCard(String title, String value, int x, int y, Color accent) {
+        JPanel card = new JPanel(null);
+        card.setBounds(x, y, 230, 100);
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createMatteBorder(0, 5, 0, 0, accent)); // Accent line on the left
+
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(new Font("Helvetica", Font.PLAIN, 12));
+        lblTitle.setForeground(Color.GRAY);
+        lblTitle.setBounds(15, 15, 200, 20);
+        card.add(lblTitle);
+
+        JLabel lblValue = new JLabel(value);
+        lblValue.setFont(new Font("Helvetica", Font.BOLD, 32));
+        lblValue.setBounds(15, 40, 200, 40);
+        card.add(lblValue);
+
+        return card;
     }
 
     private void addWindowControls() {
@@ -234,7 +497,7 @@ public class AdminDashboard extends JFrame {
 
         // -- CLOSE BUTTON --
         JButton closeBtn = new JButton("X");
-        closeBtn.setBounds(950, 5, 45, 30);
+        closeBtn.setBounds(1150, 5, 45, 30);
         closeBtn.setBackground(idleColor);
         closeBtn.setForeground(Color.BLACK);
         closeBtn.setBorderPainted(false);
@@ -255,7 +518,7 @@ public class AdminDashboard extends JFrame {
 
         // -- MINIMIZE BUTTON --
         JButton minBtn = new JButton("-");
-        minBtn.setBounds(900, 5, 45, 30);
+        minBtn.setBounds(1105, 5, 45, 30);
         minBtn.setBackground(idleColor);
         minBtn.setForeground(Color.BLACK);
         minBtn.setBorderPainted(false);
