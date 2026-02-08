@@ -47,16 +47,16 @@ public class Register extends JFrame {
         add(title);
 
         // First and Last Name
-        addLabelAndField("First Name", 100, txtFirst = new JTextField(), "Letters & '-' only", 100, 190);
-        addLabelAndField("Last Name", 100, txtLast = new JTextField(), "", 310, 190);
+        addLabelAndField("First Name", 100, txtFirst = new JTextField(), "Letters & Dash only", 100, 190);
+        addLabelAndField("Last Name", 100, txtLast = new JTextField(), "Letters & Dash only", 310, 190);
 
         // Row 2: Middle Name & ID
-        addLabelAndField("Middle Name (Optional)", 190, txtMiddle = new JTextField(), "", 100, 190);
+        addLabelAndField("Middle Name", 190, txtMiddle = new JTextField(), "Optional", 100, 190);
         addLabelAndField("Student ID", 190, txtStudentID = new JTextField(), "0000-0000", 310, 190);
         
         // Row 3: Course & Year
         JLabel lblCourse = new JLabel("Course & Year");
-        lblCourse.setBounds(100, 270, 200, 20);
+        lblCourse.setBounds(100, 275, 200, 20);
         lblCourse.setForeground(Main.TEXT_COLOR);
         add(lblCourse);
 
@@ -66,8 +66,8 @@ public class Register extends JFrame {
         cbCourse = createStyledComboBox(courses);
         cbYear = createStyledComboBox(years);
 
-        cbCourse.setBounds(100, 300, 290, 45); 
-        cbYear.setBounds(400, 300, 100, 45);
+        cbCourse.setBounds(100, 305, 290, 45); 
+        cbYear.setBounds(400, 305, 100, 45);
         add(cbCourse);
         add(cbYear);
 

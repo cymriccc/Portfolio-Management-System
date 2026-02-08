@@ -26,6 +26,7 @@ public class PasswordRecovery extends JDialog {
         setLocationRelativeTo(owner);
         setLayout(null);
         setUndecorated(true);
+        getRootPane().setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR, 2)); 
         getContentPane().setBackground(Main.BG_COLOR);
 
         JLabel title = new JLabel("RECOVER ACCOUNT");
@@ -35,9 +36,9 @@ public class PasswordRecovery extends JDialog {
         title.setHorizontalAlignment(SwingConstants.CENTER);
         add(title);
 
-        // --- Username Field ---
-        JLabel lblUser = new JLabel("Username");
-        lblUser.setBounds(centerX, 100, 100, 20);
+        // --- Username or Student ID field ---
+        JLabel lblUser = new JLabel("Username or Student ID");
+        lblUser.setBounds(centerX, 100, 200, 20);
         lblUser.setFont(new Font("Helvetica", Font.BOLD, 12));
         lblUser.setForeground(Main.TEXT_COLOR);
         add(lblUser);
@@ -70,7 +71,7 @@ public class PasswordRecovery extends JDialog {
 
         JButton btnClose = new JButton("Back to Login");
         btnClose.setBounds(centerX, 350, fieldWidth, 30);
-        btnClose.setFont(new Font("Helvetica", Font.PLAIN, 12));
+        btnClose.setFont(new Font("Helvetica", Font.BOLD, 12));
         btnClose.setForeground(Main.TEXT_COLOR);
         btnClose.setContentAreaFilled(false);
         btnClose.setBorderPainted(false);
@@ -93,30 +94,32 @@ public class PasswordRecovery extends JDialog {
     }
 
     private void handleVerification() {
-        String user = txtUser.getText().trim();
+        String identifier = txtUser.getText().trim();
         String email = txtEmail.getText().trim();
 
-        if (user.isEmpty() || email.isEmpty()) {
+        if (identifier.isEmpty() || email.isEmpty()) {
             CustomDialog.show(this, "Please fill in all fields.", false);
             return;
         }
 
-        if (blacklistedUsers.contains(user.toLowerCase())) {
+        if (blacklistedUsers.contains(identifier.toLowerCase())) {
             CustomDialog.show(this, "This account is temporarily locked.", false);
             return;
         }
 
-        String sql = "SELECT q1, a1, q2, a2 FROM users WHERE username = ? AND email = ?";
+        String sql = "SELECT username, q1, a1, q2, a2 FROM users WHERE (username = ? OR student_id = ?) AND email = ?";
         
         try (Connection conn = Database.getConnection();
              PreparedStatement pst = conn.prepareStatement(sql)) {
             
-            pst.setString(1, user);
-            pst.setString(2, email);
+            pst.setString(1, identifier);
+            pst.setString(2, identifier);
+            pst.setString(3, email);
             ResultSet rs = pst.executeQuery();
 
             if (rs.next()) {
-                showSecurityChallenge(user, rs.getString("q1"), rs.getString("a1"), 
+                String actualUsername = rs.getString("username");
+                showSecurityChallenge(actualUsername, rs.getString("q1"), rs.getString("a1"), 
                                      rs.getString("q2"), rs.getString("a2"), 1);
             } else {
                 // SECURITY: Generic message prevents hackers from knowing if username is valid
