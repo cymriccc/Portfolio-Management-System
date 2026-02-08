@@ -152,6 +152,8 @@ public class LoginForm extends JFrame {
                 } else {
                     // Open standard Student Dashboard system
                     myFrame dashboardFrame = new myFrame();
+                    dashboardFrame.loadExistingAvatar(actualUsername);
+                    
                     new MainContent(dashboardFrame, name, course, actualUsername, id);
                     new Menu(dashboardFrame);
                     new frameDisplay(dashboardFrame);

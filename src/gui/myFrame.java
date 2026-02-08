@@ -14,6 +14,8 @@ public class myFrame {
     JPanel container = new JPanel();
     CardLayout cardLayout = new CardLayout();
 
+    public JLabel sidebarProfileImg = new JLabel("", SwingConstants.CENTER);
+
     public myFrame() {
         frame.setSize(1366, 728);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -27,17 +29,18 @@ public class myFrame {
         menu.setBackground(Main.DARK_PANEL); 
         menu.setLayout(null);
 
+        sidebarProfileImg.setBounds(25, 630, 60, 60); 
+        sidebarProfileImg.setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR, 1));
+        sidebarProfileImg.setOpaque(true);
+        sidebarProfileImg.setBackground(new Color(0, 0, 0, 50));
+        menu.add(sidebarProfileImg);
+
         // Content Area (Switcher)
         container.setLayout(cardLayout); 
         container.setBounds(350, 0, 1016, 728);
-    }
 
-    JLabel sidebarProfileImg = new JLabel();
-    public void updateSidebarProfile(String path) { // method to update sidebar profile image
-    ImageIcon icon = new ImageIcon(path);
-    Image img = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-    sidebarProfileImg.setIcon(new ImageIcon(img));
-    sidebarProfileImg.setText("");
+        frame.add(menu);
+        frame.add(container);
     }
 
     public void loadExistingAvatar(String username) {
@@ -50,18 +53,33 @@ public class myFrame {
         
         if (rs.next()) {
             byte[] imgBytes = rs.getBytes("profile_picture");
-            if (imgBytes != null) {
+            if (imgBytes != null && imgBytes.length > 0) {
+                // Image found - set icon and REMOVE text
                 ImageIcon icon = new ImageIcon(imgBytes);
                 Image img = icon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
                 sidebarProfileImg.setIcon(new ImageIcon(img));
-
-                sidebarProfileImg.revalidate();
-                sidebarProfileImg.repaint();
+                sidebarProfileImg.setText("");
+            } else {
+                // No image found - show the "?"
+                sidebarProfileImg.setIcon(null);
+                sidebarProfileImg.setText("?");
+                sidebarProfileImg.setForeground(Color.WHITE);
+                sidebarProfileImg.setFont(new Font("Helvetica", Font.BOLD, 20));
             }
         }
+            sidebarProfileImg.revalidate();
+            sidebarProfileImg.repaint();
+
     } catch (Exception e) {
         e.printStackTrace();
     }
+    }
+
+    public void updateSidebarProfile(String path) { 
+        ImageIcon icon = new ImageIcon(path);
+        Image img = icon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+        sidebarProfileImg.setIcon(new ImageIcon(img));
+        sidebarProfileImg.setText("");
     }
     
     public JFrame getFrame() {
