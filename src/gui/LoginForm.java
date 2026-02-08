@@ -11,6 +11,9 @@ public class LoginForm extends JFrame {
     private JPasswordField txtPassword;
     private JButton btnLogin, btnRegister;
 
+    private int loginAttempts = 0;
+    private final int MAX_ATTEMPTS = 5;
+
     public LoginForm() {
         setSize(600, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -117,6 +120,11 @@ public class LoginForm extends JFrame {
         String user = txtUsername.getText();
         String pass = new String(txtPassword.getPassword());
 
+        if (user.isEmpty() || pass.isEmpty()) {
+            CustomDialog.show(this, "Please enter both username and password.", false);
+            return;
+        }
+
         String sql = "SELECT id, role, full_name, course_year FROM users WHERE username = ? AND password = ?";
 
         // Database verification
@@ -128,6 +136,8 @@ public class LoginForm extends JFrame {
             ResultSet rs = pst.executeQuery();
             
             if (rs.next()) {
+                loginAttempts = 0;
+
                 int id = rs.getInt("id");
                 String role = rs.getString("role");
                 String name = rs.getString("full_name");
@@ -142,13 +152,25 @@ public class LoginForm extends JFrame {
                 } else {
                     // Open standard Student Dashboard system
                     myFrame dashboardFrame = new myFrame();
+                    dashboardFrame.loadExistingAvatar(actualUsername);
+                    
                     new MainContent(dashboardFrame, name, course, actualUsername, id);
                     new Menu(dashboardFrame);
                     new frameDisplay(dashboardFrame);
                 }
                 this.dispose(); // Close login window
             } else {
-                CustomDialog.show(this, "✕ Invalid credentials!", false);
+               loginAttempts++;
+                int remaining = MAX_ATTEMPTS - loginAttempts;
+
+                if (loginAttempts >= MAX_ATTEMPTS) {
+                    CustomDialog.show(this, "Too many failed attempts. Login Disabled.", false);
+                    btnLogin.setEnabled(false); // Lock the button
+                    txtUsername.setEnabled(false);
+                    txtPassword.setEnabled(false);
+                } else {
+                    CustomDialog.show(this, "✕ Invalid credentials! " + remaining + " attempts left.", false);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -10,6 +10,13 @@ CREATE TABLE `users` (
   `password` varchar(100) NOT NULL,
   `role` varchar(20) DEFAULT 'student',
   `bio` TEXT,
+  `q1` varchar(255) DEFAULT NULL,
+  `a1` varchar(255) DEFAULT NULL,
+  `q2` varchar(255) DEFAULT NULL,
+  `a2` varchar(255) DEFAULT NULL,
+  `q3` varchar(255) DEFAULT NULL,
+  `a3` varchar(255) DEFAULT NULL,
+
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -29,11 +36,36 @@ CREATE TABLE `portfolios` (
 -- Dumping data for table `users`
 -- Note: Setting 'Administrator' to role 'admin'
 LOCK TABLES `users` WRITE;
-INSERT INTO `users` (`full_name`, `student_id`, `course_year`, `email`, `username`, `password`, `role`) VALUES 
-('Administrator', '0000-0000', 'N/A', 'admin@nu-moa.edu.ph', 'admin', 'admin123', 'admin'),
-('Jhulzen Guerrero', '2025-0001', 'BSIT-1', 'jhulzen@email.com', 'jhulzen', '102806', 'student'),
-('Kristine Borres', '2025-0002', 'BSIT-1', 'tine@email.com', 'tine', '082507', 'student'),
-('Chelsie Chavez', '2025-0003', 'BSIT-1', 'chels@email.com', 'chels', '12345678', 'student'),
-('Aldrich Hilamon', '2025-0004', 'BSIT-1', 'babygirl@email.com', 'babygirl', '12345678', 'student'),
-('Carlo Dingle', '2025-1055147', 'BSIT-1', 'carlo@email.com', 'cymric', 'locardingle', 'student');
+INSERT INTO `users` 
+(`full_name`, `student_id`, `course_year`, `email`, `username`, `password`, `role`, `q1`, `a1`, `q2`, `a2`, `q3`, `a3`) 
+VALUES 
+('Administrator', '0000-0000', 'N/A', 'admin@nu-moa.edu.ph', 'admin', 'admin123', 'admin', 
+ 'What was the name of your first pet?', 'Rex', 
+ 'What is your mother\'s maiden name?', 'Smith', 
+ 'In what city were you born?', 'Manila'),
+
+('Jhulzen Guerrero', '2025-0001', 'BSIT-1', 'jhulzen@email.com', 'jhulzen', '102806', 'student', 
+ 'What was the name of your first pet?', 'Fluffy', 
+ 'What is your mother\'s maiden name?', 'Santos', 
+ 'In what city were you born?', 'Pasay'),
+
+('Kristine Borres', '2025-0002', 'BSIT-1', 'tine@email.com', 'tine', '082507', 'student', 
+ 'What was the name of your first pet?', 'Buddy', 
+ 'What is your mother\'s maiden name?', 'Reyes', 
+ 'In what city were you born?', 'Makati'),
+
+('Chelsie Chavez', '2025-0003', 'BSIT-1', 'chels@email.com', 'chels', '12345678', 'student', 
+ 'What was the name of your first pet?', 'Snowy', 
+ 'What is your mother\'s maiden name?', 'Garcia', 
+ 'In what city were you born?', 'Quezon City'),
+
+('Aldrich Hilamon', '2025-0004', 'BSIT-1', 'babygirl@email.com', 'babygirl', '12345678', 'student', 
+ 'What was the name of your first pet?', 'Goldie', 
+ 'What is your mother\'s maiden name?', 'Cruz', 
+ 'In what city were you born?', 'Taguig'),
+
+('Carlo Dingle', '2025-1055147', 'BSIT-1', 'carlo@email.com', 'cymric', 'locardingle', 'student', 
+ 'What was the name of your first pet?', 'Max', 
+ 'What is your mother\'s maiden name?', 'Dela Cruz', 
+ 'In what city were you born?', 'Cebu');
 UNLOCK TABLES;
