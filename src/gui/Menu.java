@@ -6,9 +6,11 @@ import javax.swing.*;
 import main.Main;
 
 public class Menu {
+    private JPanel activeIndicator;
+
     public Menu(myFrame frameObject) {
         JPanel menuPanel = frameObject.getMenu();
-
+    
         // --- LOGO IMAGE ---
         try {
             ImageIcon logoIcon = new ImageIcon("logo.png");
@@ -42,6 +44,13 @@ public class Menu {
         subtitleLabel.setForeground(new Color(0xBDC3C7));
         subtitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         menuPanel.add(subtitleLabel);
+
+        // --- ACTIVE INDICATOR ---
+        activeIndicator = new JPanel();
+        // Centered vertically on the first button (Y: 240 + 5px offset)
+        activeIndicator.setBounds(0, 245, 5, 40); 
+        activeIndicator.setBackground(new Color(0x575FCF)); 
+        menuPanel.add(activeIndicator);
 
         // --- NAVIGATION BUTTONS ---
         // 1. Create the buttons and store them in variables
@@ -90,11 +99,8 @@ public class Menu {
         // Navigation Logic
         profileBtn.addActionListener(e -> {
             frameObject.getCardLayout().show(frameObject.getContainer(), "PROFILE");
-    
-            // 1. Wipe the indigo line and blue text from the Dashboard and other buttons
             resetButtonStyles(menuPanel); 
-
-            // 2. (Optional) If you want the "My Profile" button to also get a line:
+            activeIndicator.setVisible(false);
             profileBtn.setBackground(new Color(0x575FCF)); 
             profileBtn.setForeground(Color.WHITE);
         });
@@ -177,12 +183,20 @@ public class Menu {
 
         btn.addActionListener(e -> {
            frameObject.getCardLayout().show(frameObject.getContainer(), cardName);
-            resetButtonStyles(frameObject.getMenu()); // Clear other lines
-            // Add the Indigo "Active Line" on the left
-            btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 5, 0, 0, new Color(0x575FCF)),
-                BorderFactory.createEmptyBorder(0, 35, 0, 0)
-            ));
+           activeIndicator.setVisible(true);
+           activeIndicator.setLocation(0, yPos + 5);
+            resetButtonStyles(frameObject.getMenu());
+            
+            if (cardName.equals("DASHBOARD")) {
+                for (Component comp : frameObject.getContainer().getComponents()) {
+                    if (comp instanceof DashboardPanel) {
+                        ((DashboardPanel) comp).refreshData(); // Updates text and your new graph
+                        break;
+                    }
+                }
+            }
+
+            btn.setBorder(BorderFactory.createEmptyBorder(0, 40, 0, 0));
             btn.setForeground(new Color(0x575FCF));
         });
         
