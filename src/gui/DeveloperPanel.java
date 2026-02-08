@@ -5,12 +5,12 @@ import java.awt.event.*;
 import javax.swing.*;
 import main.Main;
 
-public class SettingsPanel extends JPanel {
-    public SettingsPanel() {
+public class DeveloperPanel extends JPanel {
+    public DeveloperPanel() {
         setLayout(null);
         setBackground(Main.BG_COLOR);
 
-        JLabel title = new JLabel("Settings (Developers)");
+        JLabel title = new JLabel("Developers");
         title.setBounds(40, 40, 400, 50);
         title.setFont(new Font("Helvetica", Font.BOLD, 28));
         title.setForeground(Main.TEXT_COLOR);
@@ -18,7 +18,7 @@ public class SettingsPanel extends JPanel {
 
         JLabel badge = new JLabel("PORTFOLIO MANAGEMENT SYSTEM BY VANTAGE", SwingConstants.CENTER);
         badge.setBounds(40, 85, 320, 25);
-        badge.setOpaque(true); // to show background color
+        badge.setOpaque(true);
         badge.setBackground(Main.ACCENT_COLOR);
         badge.setForeground(Color.WHITE);
         badge.setFont(new Font("Helvetica", Font.BOLD, 10));
@@ -39,17 +39,17 @@ public class SettingsPanel extends JPanel {
 
         // developers with descriptions
         add(createMemberCard("Main Coder", "Carlo Sebastian Dingle", 
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.", startX, startY, cardWidth, cardHeight));
+            "Mainly focused on coding the system’s panels and windows. This included creating the user interface for the Sign-In and Sign-Up windows, developing the entire Admin window along with all its included panels, and starting the main system window. The dashboard was also implemented with features such as the total projects display, graphs, and welcome greetings connected to the database. The user interface for the My Portfolio section was created.", startX, startY, cardWidth, cardHeight));
         add(createMemberCard("Assistant Coder", "Kristine Joice Borres", 
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.", startX + cardWidth + padding, startY, cardWidth, cardHeight));
+            "Improved the Sign-In and Sign-Up modules by adding proper validations and user-friendly guides. Also included developing the “Forgot Password” feature with security questions for secure account recovery. In addition, covered the development of the Discovery module and the Developers Panel, as well as optimizing the user profile system to ensure accurate validation and reliable database updates.", startX + cardWidth + padding, startY, cardWidth, cardHeight));
             
         add(createMemberCard("Assistant Coder", "Lianne Jhulzen Guerrero", 
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.", startX, startY + cardHeight + padding, cardWidth, cardHeight));
+            "Focused on creating the database used for the login and sign-up system, designing the initial user interface for both forms, and assisting in writing the project documentation. This included setting up how user data is stored, building the basic layout and structure of the login and registration pages, and helping document the system features and processes for better team reference and future improvements.", startX, startY + cardHeight + padding, cardWidth, cardHeight));
             
         add(createMemberCard("Documentation", "Chelsie Chavez", 
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.", startX + cardWidth + padding, startY + cardHeight + padding, cardWidth, cardHeight));
+            "Focused on creating the progress report and other required project documents, with particular emphasis on writing and completing Chapter 1 for the system documentation. This included organizing project details, clearly presenting the system overview, and ensuring all documentation requirements were properly met.", startX + cardWidth + padding, startY + cardHeight + padding, cardWidth, cardHeight));
 
-        JLabel footer = new JLabel("© 2026 Student Portfolio System | Developed by SANA-OL for Academic Purposes");
+        JLabel footer = new JLabel("© 2026 Student Portfolio System | Developed by Vantage for Academic Purposes");
         footer.setBounds(0, 660, 1016, 30);
         footer.setHorizontalAlignment(SwingConstants.CENTER);
         footer.setForeground(new Color(0x636E72));
@@ -68,7 +68,7 @@ public class SettingsPanel extends JPanel {
         JLabel roleLabel = new JLabel(role.toUpperCase());
         roleLabel.setBounds(25, 15, 300, 20);
         roleLabel.setForeground(Main.ACCENT_COLOR);
-        roleLabel.setFont(new Font("Verdana", Font.BOLD, 10)); 
+        roleLabel.setFont(new Font("Verdana", Font.BOLD, 11)); 
         card.add(roleLabel);
 
         // 2. Name Label 
@@ -84,7 +84,7 @@ public class SettingsPanel extends JPanel {
                                       "</body></html>");
         descLabel.setBounds(25, 75, 390, 100);
         descLabel.setForeground(new Color(0x636E72));
-        descLabel.setFont(new Font("SansSerif", Font.ITALIC, 13)); 
+        descLabel.setFont(new Font("SansSerif", Font.ITALIC, 11)); 
         descLabel.setVerticalAlignment(SwingConstants.TOP);
         card.add(descLabel);
 

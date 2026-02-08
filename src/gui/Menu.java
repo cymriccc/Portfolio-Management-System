@@ -48,13 +48,13 @@ public class Menu {
         JButton dashBtn = createMenuButton("Dashboard", 240, frameObject, "DASHBOARD");
         JButton portBtn = createMenuButton("My Portfolio", 300, frameObject, "PORTFOLIO");
         JButton discoveryBtn = createMenuButton("Discovery", 360, frameObject, "DISCOVERY");
-        JButton settBtn = createMenuButton("Settings", 420, frameObject, "SETTINGS");
+        JButton developBtn = createMenuButton("Developers", 420, frameObject, "DEVELOPERS");
         
         // 2. Add them to the sidebar
         menuPanel.add(dashBtn);
         menuPanel.add(portBtn);
         menuPanel.add(discoveryBtn);
-        menuPanel.add(settBtn);
+        menuPanel.add(developBtn);
 
         // 3. Force the Dashboard button to be "Active" on startup
         dashBtn.setBounds(0, 240, 350, 50); // Match the new Y position
