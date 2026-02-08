@@ -16,7 +16,7 @@ public class MainContent {
         container.add(dashboard, "DASHBOARD");
         container.add(new PortfolioPanel(userId), "PORTFOLIO");
         container.add(new DiscoveryPanel(), "DISCOVERY");
-        container.add(new SettingsPanel(), "SETTINGS");
+        container.add(new DeveloperPanel(), "DEVELOPERS");
         container.add(new ProfilePanel(frameObject, username, dashboard), "PROFILE");
 
         addWindowControls(frameObject);
