@@ -5,12 +5,18 @@ import java.awt.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.swing.*;
 import main.Main;
 
 public class PortfolioPanel extends JPanel {
     private JPanel galleryContainer;
+    private JPanel tagFilterPanel;
     private int currentUserId;
+    private Set<String> selectedTags = new HashSet<>();
+    private final int MAX_VISIBLE_TAGS = 6;
 
     public PortfolioPanel(int userId) {
         this.currentUserId = userId;
@@ -18,17 +24,22 @@ public class PortfolioPanel extends JPanel {
         // MATCHING DASHBOARD COLOR
         setLayout(null);
         setBackground(Main.BG_COLOR); 
-
         JLabel title = new JLabel("My Portfolio Projects");
-        title.setBounds(50, 30, 400, 40);
+        title.setBounds(50, 25, 400, 40);
         title.setFont(new Font("Helvetica", Font.BOLD, 28));
         title.setForeground(new Color(0x2D3436));
         add(title);
 
+        // 2. Tag Filter Bar 
+        tagFilterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        tagFilterPanel.setBackground(Main.BG_COLOR);
+        tagFilterPanel.setBounds(45, 85, 850, 50); 
+        add(tagFilterPanel);
+
         // --- Add Button ---
         JButton btnOpenPopup = new JButton("+ ADD PROJECT");
-        btnOpenPopup.setBounds(700, 30, 180, 40);
-        btnOpenPopup.setBackground(Main.ACCENT_COLOR); // 0x575FCF
+        btnOpenPopup.setBounds(720, 25, 180, 45);
+        btnOpenPopup.setBackground(Main.ACCENT_COLOR); 
         btnOpenPopup.setForeground(Color.WHITE);
         btnOpenPopup.setFont(new Font("Helvetica", Font.BOLD, 14));
         btnOpenPopup.setFocusPainted(false);
@@ -48,8 +59,7 @@ public class PortfolioPanel extends JPanel {
         add(btnOpenPopup);
 
         // --- Gallery Scroll Area ---
-        galleryContainer = new JPanel();
-        galleryContainer.setLayout(new GridLayout(0,3,25,25));
+        galleryContainer = new JPanel(new GridLayout(0, 3, 25, 25));
         galleryContainer.setBackground(Main.BG_COLOR);
 
         JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -57,75 +67,252 @@ public class PortfolioPanel extends JPanel {
         wrapper.add(galleryContainer);
 
         JScrollPane scrollPane = new JScrollPane(wrapper);
-        // Since your main panel uses null layout, you MUST use setBounds
-        scrollPane.setBounds(50, 100, 850, 500); 
+        scrollPane.setBounds(50, 150, 850, 450); 
         scrollPane.setBorder(null); 
-        scrollPane.setBackground(Main.BG_COLOR);
-        scrollPane.getViewport().setBackground(Main.BG_COLOR); // Ensures "Ice" theme consistency
-
-        // FORCE scrollbar behavior so it only goes vertical
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         add(scrollPane);
 
-        loadProjects(currentUserId); // Initial load from MySQL
+        refreshTagUI();
+        loadProjects(currentUserId, null); 
+    }
+    private void refreshTagUI() {
+        tagFilterPanel.removeAll();
+
+        Set<String> allTags = fetchUniqueTags();
+        
+        String sql = "SELECT DISTINCT tags FROM projects WHERE user_id = ?";
+        Set<String> uniqueTags = new java.util.TreeSet<>();
+        
+        if (!selectedTags.isEmpty()) {
+            JButton clearBtn = new JButton("Clear All ✕");
+            clearBtn.setFont(new Font("Helvetica", Font.BOLD, 12));
+            clearBtn.setForeground(new Color(0x636E72));
+            clearBtn.setContentAreaFilled(false);
+            clearBtn.setBorderPainted(false);
+            clearBtn.setFocusPainted(false);
+            clearBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            clearBtn.addActionListener(e -> {
+                selectedTags.clear();
+                refreshTagUI();
+                loadProjects(currentUserId, null);
+            });
+            tagFilterPanel.add(clearBtn);
+        }
+
+        // 2. Render Tag Pills - This is now OUTSIDE the 'if' block
+        int count = 0;
+        for (String tag : allTags) {
+            if (count < MAX_VISIBLE_TAGS) {
+                tagFilterPanel.add(createTagPill(tag));
+                count++;
+            } else {
+                JButton moreBtn = new JButton("+ " + (allTags.size() - MAX_VISIBLE_TAGS) + " More");
+                styleGhostButton(moreBtn);
+                moreBtn.addActionListener(e -> showAllTagsPopup(allTags));
+                tagFilterPanel.add(moreBtn);
+                break;
+            }
+        }
+
+        tagFilterPanel.revalidate();
+        tagFilterPanel.repaint();
+    }
+
+    private JToggleButton createTagPill(String tag) {
+        JToggleButton tagBtn = new JToggleButton(tag);
+        tagBtn.setFocusPainted(false);
+        tagBtn.setSelected(selectedTags.contains(tag));
+        tagBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        tagBtn.setFont(new Font("Helvetica", Font.PLAIN, 13));
+
+        // Pill Styling
+        tagBtn.setBackground(tagBtn.isSelected() ? Main.ACCENT_COLOR : Color.WHITE);
+        tagBtn.setForeground(tagBtn.isSelected() ? Color.WHITE : new Color(0x2D3436));
+        tagBtn.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xD1D8E0), 1, true),
+            BorderFactory.createEmptyBorder(8, 18, 8, 18)
+        ));
+
+        tagBtn.addActionListener(e -> {
+            if (tagBtn.isSelected()) selectedTags.add(tag);
+            else selectedTags.remove(tag);
+            refreshTagUI();
+            loadProjects(currentUserId, "FILTER");
+        });
+        return tagBtn;
+    }
+
+    private void styleGhostButton(JButton btn) {
+        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setBackground(Color.WHITE);
+        btn.setFont(new Font("Helvetica", Font.BOLD, 13));
+        btn.setForeground(Main.ACCENT_COLOR);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(Main.ACCENT_COLOR, 1, true),
+        BorderFactory.createEmptyBorder(8, 15, 8, 15)
+    ));
+    }
+
+    private void showAllTagsPopup(Set<String> allTags) {
+        TagSelectionDialog dialog = new TagSelectionDialog(
+            (Frame) SwingUtilities.getWindowAncestor(this), 
+            allTags, 
+            selectedTags
+        );
+        dialog.setVisible(true);
+        refreshTagUI();
+        loadProjects(currentUserId, "FILTER");
+    }
+
+    private class TagSelectionDialog extends JDialog {
+        public TagSelectionDialog(Frame owner, Set<String> allTags, Set<String> selected) {
+            super(owner, true);
+            setSize(500, 450); 
+            setLocationRelativeTo(owner);
+            setUndecorated(true);
+            
+            JPanel content = new JPanel(new BorderLayout());
+            content.setBackground(Color.WHITE);
+            content.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 2));
+
+            // --- 1. Header (Simple Title Only) ---
+            JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 20));
+            header.setBackground(Color.WHITE);
+            JLabel title = new JLabel("All Categories");
+            title.setFont(new Font("Helvetica", Font.BOLD, 22));
+            header.add(title);
+            content.add(header, BorderLayout.NORTH);
+
+            // --- 2. Wrapped Tag Grid ---
+            JPanel listPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
+            listPanel.setBackground(Color.WHITE);
+            
+            for (String tag : allTags) {
+                listPanel.add(createTagPill(tag));
+            }
+
+            // DYNAMIC HEIGHT CALCULATION: Ensures scrollbar works
+            // Assuming roughly 3-4 tags per row, we calculate height
+            int totalTags = allTags.size();
+            int estimatedRows = (totalTags / 3) + 1;
+            int calculatedHeight = estimatedRows * 60; 
+            listPanel.setPreferredSize(new Dimension(460, Math.max(300, calculatedHeight)));
+
+            JScrollPane scroll = new JScrollPane(listPanel);
+            scroll.setBorder(null);
+            scroll.getVerticalScrollBar().setUnitIncrement(16);
+            scroll.getVerticalScrollBar().setPreferredSize(new Dimension(8, 0));
+            scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            
+            // Modern Slim Scrollbar UI
+            scroll.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+                @Override protected void configureScrollBarColors() {
+                    this.thumbColor = new Color(0xCED4DA);
+                    this.trackColor = Color.WHITE;
+                }
+                @Override protected JButton createDecreaseButton(int orientation) { return createZero(); }
+                @Override protected JButton createIncreaseButton(int orientation) { return createZero(); }
+                private JButton createZero() { JButton b = new JButton(); b.setPreferredSize(new Dimension(0,0)); return b; }
+            });
+            
+            content.add(scroll, BorderLayout.CENTER);
+
+            // --- 3. Footer (Action Buttons) ---
+            JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
+            footer.setBackground(new Color(0xF8F9FA));
+            footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0xEEEEEE)));
+
+            // NEW CLOSE BUTTON (Replaces the X)
+            JButton cancelBtn = new JButton("CLOSE");
+            cancelBtn.setPreferredSize(new Dimension(100, 40));
+            cancelBtn.setFont(new Font("Helvetica", Font.BOLD, 12));
+            cancelBtn.setForeground(new Color(0x636E72));
+            cancelBtn.setContentAreaFilled(false);
+            cancelBtn.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0)));
+            cancelBtn.setFocusPainted(false);
+            cancelBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            cancelBtn.addActionListener(e -> dispose());
+
+            // APPLY BUTTON
+            JButton doneBtn = new JButton("APPLY FILTERS");
+            doneBtn.setPreferredSize(new Dimension(150, 40));
+            doneBtn.setBackground(Main.ACCENT_COLOR);
+            doneBtn.setForeground(Color.WHITE);
+            doneBtn.setFont(new Font("Helvetica", Font.BOLD, 12));
+            doneBtn.setFocusPainted(false);
+            doneBtn.setBorderPainted(false);
+            doneBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            doneBtn.addActionListener(e -> dispose());
+            
+            footer.add(cancelBtn);
+            footer.add(doneBtn);
+            content.add(footer, BorderLayout.SOUTH);
+
+            add(content);
+        }
+    }
+
+    private Set<String> fetchUniqueTags() {
+        Set<String> uniqueTags = new java.util.TreeSet<>();
+        String sql = "SELECT DISTINCT tags FROM projects WHERE user_id = ?";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setInt(1, currentUserId);
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                String t = rs.getString("tags");
+                if (t != null) for (String p : t.split(",")) uniqueTags.add(p.trim());
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return uniqueTags;
+    }
+
+    // Updated loadProjects to accept a filter string
+    public void loadProjects(int userId, String filterTrigger) {
+        galleryContainer.removeAll();
+        StringBuilder sql = new StringBuilder("SELECT p.* FROM portfolios p ");
+        if (!selectedTags.isEmpty()) {
+            sql.append("JOIN projects pr ON p.project_id = pr.id WHERE p.user_id = ? AND (");
+            sql.append(selectedTags.stream().map(t -> "pr.tags LIKE ?").collect(Collectors.joining(" OR ")));
+            sql.append(")");
+        } else {
+            sql.append("WHERE p.user_id = ?");
+        }
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement pst = conn.prepareStatement(sql.toString())) {
+            pst.setInt(1, currentUserId);
+            if (!selectedTags.isEmpty()) {
+                int i = 2;
+                for (String tag : selectedTags) pst.setString(i++, "%" + tag + "%");
+            }
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("project_name");
+                byte[] imgBytes = rs.getBytes("file_data");
+                String fileName = rs.getString("file_name");
+                galleryContainer.add(createProjectCard(id, name, imgBytes, fileName != null && fileName.endsWith(".pdf")));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        galleryContainer.revalidate();
+        galleryContainer.repaint();
+    }
+
+    public void loadProjects(int userId) { 
+        loadProjects(userId, null);
     }
 
     private void showAddPortfolioPopup() {
-        // We pass 'this' so the popup can call loadProjects() when done
         AddPortfolioPopup popup = new AddPortfolioPopup(
             (Frame) SwingUtilities.getWindowAncestor(this),
             this,
             this.currentUserId
         );
         popup.setVisible(true);
-    }
-
-    public void loadProjects(int userId) {
-        this.currentUserId = userId;
-        galleryContainer.removeAll();
-        // Fetching ID, Name, and the actual Image data
-        System.out.println("DEBUG: Fetching projects for User ID: " + currentUserId);
-        String sql = "SELECT id, project_name, description, upload_date, file_data, file_name, image_path FROM portfolios WHERE user_id = ?";
-
-        try (Connection conn = Database.getConnection();
-            PreparedStatement pst = conn.prepareStatement(sql)) {
-
-            pst.setInt(1, currentUserId);
-            ResultSet rs = pst.executeQuery();
-
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String name = rs.getString("project_name");
-                String fileName = rs.getString("file_name");
-                byte[] imgBytes = rs.getBytes("file_data");
-                String imagePath = rs.getString("image_path");
-            
-                // 1. PRIORITY: If there is actual uploaded data (BLOB), use it
-                if (imgBytes != null && imgBytes.length > 0) {
-                    System.out.println("DEBUG: Real upload found for: " + name);
-                    boolean isPdf = (fileName != null && fileName.toLowerCase().endsWith(".pdf"));
-                    galleryContainer.add(createProjectCard(id, name, imgBytes, isPdf)); 
-                } 
-                // 2. FALLBACK: Use the placeholder path if no BLOB exists
-                else if (imagePath != null && !imagePath.isEmpty()) {
-                    System.out.println("DEBUG: Using placeholder path for: " + name);
-                    // We pass the path to a modified card creator or handle conversion
-                    galleryContainer.add(createProjectCardFromPath(id, name, imagePath));
-                } 
-                // 3. EMERGENCY: Default if everything is missing
-                else {
-                    System.out.println("DEBUG: No data or path for: " + name);
-                    galleryContainer.add(createProjectCardFromPath(id, name, "src/assets/image_preview.png"));
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("❌ SQL ERROR IN PortfolioPanel:");
-            e.printStackTrace();
-        }
-        galleryContainer.revalidate();
-        galleryContainer.repaint();
+        refreshTagUI();
     }
 
     private JPanel createProjectCardFromPath(int id, String name, String path) {
@@ -202,7 +389,6 @@ public class PortfolioPanel extends JPanel {
             }
         } 
         else {
-            // 3. No data at all
             imgLabel.setText("No Preview");
             imgLabel.setForeground(Color.GRAY);
         }

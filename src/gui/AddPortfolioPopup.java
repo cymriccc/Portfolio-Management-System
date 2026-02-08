@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import main.Main;
@@ -17,12 +18,19 @@ public class AddPortfolioPopup extends JDialog {
     private JTextField txtProjectName;
     private PortfolioPanel parentPanel;
 
+    private JTextArea txtDescription;
+    private DefaultListModel<String> selectedFilesModel = new DefaultListModel<>();
+    private JPanel tagContainer;
+    private JTextField tagInput;
+    private java.util.List<String> currentTags = new java.util.ArrayList<>();
+    private java.util.List<File> selectedFiles = new java.util.ArrayList<>();
+
     public AddPortfolioPopup(Frame owner, PortfolioPanel parent, int userId) {
         super(owner, "Add New Project", true);
         this.parentPanel = parent;
         this.currentUserId = userId;
         
-        setSize(500, 450);
+        setSize(500, 620);
         setLocationRelativeTo(owner);
         setUndecorated(true);
         
@@ -32,22 +40,57 @@ public class AddPortfolioPopup extends JDialog {
         rootPanel.setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR, 2)); 
         this.setContentPane(rootPanel);
 
+        // TITLE
         JLabel title = new JLabel("Upload New Project");
         title.setBounds(30, 20, 300, 30);
         title.setFont(new Font("Helvetica", Font.BOLD, 22));
         add(title);
 
-        // --- Reuse your existing input fields ---
+        // Reuse your existing input fields
         JLabel lblName = new JLabel("Project Name:");
         lblName.setBounds(30, 70, 150, 20);
         add(lblName);
 
         txtProjectName = new JTextField();
-        txtProjectName.setBounds(30, 100, 420, 35);
+        txtProjectName.setBounds(30, 95, 420, 35);
         add(txtProjectName);
 
+        JLabel lblDesc = new JLabel("Description:");
+        lblDesc.setBounds(30, 140, 150, 20);
+        add(lblDesc);
+
+         txtDescription = new JTextArea();
+        txtDescription.setLineWrap(true);
+        txtDescription.setWrapStyleWord(true);
+        txtDescription.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0)));
+        JScrollPane descScroll = new JScrollPane(txtDescription);
+        descScroll.setBounds(30, 165, 420, 80);
+        add(descScroll);
+
+        JLabel lblTags = new JLabel("Tags (e.g., 3D Art, Illustration):");
+        lblTags.setBounds(30, 255, 300, 20);
+        add(lblTags);
+
+        tagInput = new JTextField();
+        tagInput.setBounds(30, 280, 320, 35);
+        add(tagInput);
+
+        JButton btnAddTag = new JButton("ADD");
+        btnAddTag.setBounds(360, 280, 90, 35);
+        btnAddTag.setBackground(Main.ACCENT_COLOR);
+        btnAddTag.setForeground(Color.WHITE);
+        btnAddTag.addActionListener(e -> addTag(tagInput.getText().trim()));
+        add(btnAddTag);
+
+        tagContainer = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        tagContainer.setBackground(Color.WHITE);
+        JScrollPane tagScroll = new JScrollPane(tagContainer);
+        tagScroll.setBounds(30, 325, 420, 60);
+        tagScroll.setBorder(null);
+        add(tagScroll);
+
         JButton btnChoose = new JButton("CHOOSE FILE");
-        btnChoose.setBounds(30, 160, 150, 40);
+        btnChoose.setBounds(30, 405, 150, 40);
         btnChoose.setBackground(new Color(0x2D3436));
         btnChoose.setFont(new Font("Helvetica", Font.BOLD, 14));
         btnChoose.setFocusPainted(false);
@@ -58,11 +101,11 @@ public class AddPortfolioPopup extends JDialog {
         add(btnChoose);
 
         lblFileName = new JLabel("No file selected");
-        lblFileName.setBounds(30, 210, 400, 20);
+        lblFileName.setBounds(30, 450, 420, 20);
         add(lblFileName);
 
         JButton btnUpload = new JButton("UPLOAD NOW");
-        btnUpload.setBounds(30, 320, 420, 45);
+        btnUpload.setBounds(30, 530, 420, 45);
         btnUpload.setBackground(Main.ACCENT_COLOR);
         btnUpload.setForeground(Color.WHITE);
         btnUpload.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -71,8 +114,8 @@ public class AddPortfolioPopup extends JDialog {
         btnUpload.setBorderPainted(false);
         btnUpload.addActionListener(e -> upload());
         add(btnUpload);
-
-        // --- CUSTOM CLOSE BUTTON (Top Right) ---
+        
+        // CUSTOM CLOSE BUTTON
         JButton btnClose = new JButton("X");
         btnClose.setBounds(460, 5, 40, 40);
         btnClose.setFont(new Font("Arial", Font.PLAIN, 24));
@@ -98,38 +141,82 @@ public class AddPortfolioPopup extends JDialog {
 
     private void chooseFile() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Images & PDFs", "jpg", "png", "pdf"));
+        fileChooser.setMultiSelectionEnabled(true); // Allow selecting multiple files
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Images", "jpg", "png", "jpeg"));
+    
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            selectedFile = fileChooser.getSelectedFile();
-            lblFileName.setText("Selected: " + selectedFile.getName());
+            File[] files = fileChooser.getSelectedFiles();
+            for (File f : files) {
+                selectedFiles.add(f);
+            }
+            lblFileName.setText(selectedFiles.size() + " files selected");
+        }
+    }
+
+    private void addTag(String tag) {
+        if (!tag.isEmpty() && !currentTags.contains(tag)) {
+            currentTags.add(tag);
+            JButton tagBtn = new JButton(tag + "  ✕");
+            tagBtn.setFont(new Font("Helvetica", Font.PLAIN, 11));
+            tagBtn.setBackground(new Color(0xF1F2F6));
+            tagBtn.setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR));
+            tagBtn.addActionListener(e -> {
+                currentTags.remove(tag);
+                tagContainer.remove(tagBtn);
+                tagContainer.revalidate();
+                tagContainer.repaint();
+            });
+            tagContainer.add(tagBtn);
+            tagInput.setText("");
+            tagContainer.revalidate();
         }
     }
 
     private void upload() {
-        if (selectedFile == null || txtProjectName.getText().isEmpty()) {
-            CustomDialog.show(this, "Please fill all fields!", false);
-            return;
-        }
+    if (selectedFiles.isEmpty() || txtProjectName.getText().isEmpty()) {
+        CustomDialog.show(this, "Please select files and enter a name!", false);
+        return;
+    }
 
-        String sql = "INSERT INTO portfolios (user_id, project_name, file_data, file_name) VALUES (?, ?, ?, ?)";
-        try (Connection conn = Database.getConnection();
-             PreparedStatement pst = conn.prepareStatement(sql);
-             FileInputStream fis = new FileInputStream(selectedFile)) {
-            
-            pst.setInt(1, this.currentUserId); // Replace with real user ID
-            pst.setString(2, txtProjectName.getText());
-            pst.setBinaryStream(3, fis, (int) selectedFile.length());
-            pst.setString(4, selectedFile.getName());
-            
-            pst.executeUpdate();
-            CustomDialog.show(this, "Uploaded!", true);
+    try (Connection conn = Database.getConnection()) {
+        conn.setAutoCommit(false);
 
-            // Refresh parent gallery
+        // Insert Project Info
+        String projectSql = "INSERT INTO projects (user_id, project_name, description, tags) VALUES (?, ?, ?, ?)";
+            try (PreparedStatement projectPst = conn.prepareStatement(projectSql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                projectPst.setInt(1, currentUserId);
+                projectPst.setString(2, txtProjectName.getText());
+                projectPst.setString(3, txtDescription.getText());
+                projectPst.setString(4, String.join(",", currentTags));
+                projectPst.executeUpdate();
+
+                try (ResultSet rs = projectPst.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int projectId = rs.getInt(1);
+
+                        String fileSql = "INSERT INTO portfolios (user_id, project_id, project_name, file_data, file_name) VALUES (?, ?, ?, ?, ?)";
+                        try (PreparedStatement filePst = conn.prepareStatement(fileSql)) {
+                            for (File file : selectedFiles) {
+                                filePst.setInt(1, currentUserId);
+                                filePst.setInt(2, projectId);
+                                filePst.setString(3, txtProjectName.getText());
+                                try (FileInputStream fis = new FileInputStream(file)) {
+                                    filePst.setBinaryStream(4, fis, (int) file.length());
+                                    filePst.setString(5, file.getName());
+                                    filePst.executeUpdate();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            conn.commit();
+            CustomDialog.show(this, "Project Group Uploaded!", true);
             if(parentPanel != null) parentPanel.loadProjects(currentUserId);
-            dispose(); // Close the popup
+            dispose();
         } catch (Exception e) {
             e.printStackTrace();
-            CustomDialog.show(this, "Failed!", false);
+            CustomDialog.show(this, "Upload failed!", false);
         }
     }
 }
