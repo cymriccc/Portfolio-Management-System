@@ -63,6 +63,9 @@ public class ProfilePanel extends JPanel {
 
         add(createLabel("Student ID Number", x, y + 180));
         idField = createField(x, y + 205, w, h); 
+        idField.setEditable(false);
+        idField.setFocusable(false);
+        idField.setBackground(new Color(0xEEEEEE)); 
         add(idField);
 
         add(createSectionHeader("Academic & Contact", x, y + 260));
@@ -70,19 +73,22 @@ public class ProfilePanel extends JPanel {
         add(createLabel("Course & Year Level", x, y + 300));
         courseComboBox = new JComboBox<>();
         courseComboBox.setBounds(x, y + 325, w, h);
-        courseComboBox.setEnabled(false); 
+        courseComboBox.setFocusable(false);
+        courseComboBox.setEnabled(true);
+        courseComboBox.setEditable(false);
         courseComboBox.setBackground(Color.WHITE);
+        courseComboBox.setForeground(Color.BLACK);
+        courseComboBox.setFont(new Font("Helvetica", Font.PLAIN, 12));
         courseComboBox.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                label.setBorder(new EmptyBorder(0, 10, 0, 0)); // 10px left padding to match your text fields
+                label.setBorder(new EmptyBorder(0, 10, 0, 0));
+                label.setFont(new Font("Helvetica", Font.PLAIN, 12));
+                label.setForeground(Color.BLACK); 
                 return label;
             }
         });
-
-        // Match the border style of your other fields
-        courseComboBox.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 1));
         add(courseComboBox);
 
         add(createLabel("Email Address", x, y + 370));
@@ -117,19 +123,29 @@ public class ProfilePanel extends JPanel {
 
     private void loadUserData() {
         try (Connection conn = Database.getConnection()) {
-        // We select everything needed to fill the form
         String sql = "SELECT full_name, username, student_id, course_year, email, bio, profile_picture FROM users WHERE username = ?";
         PreparedStatement pst = conn.prepareStatement(sql);
         pst.setString(1, currentUsername);
         ResultSet rs = pst.executeQuery();
 
-        if (rs.next()) {
+       if (rs.next()) {
             nameField.setText(rs.getString("full_name"));
             userField.setText(rs.getString("username"));
             idField.setText(rs.getString("student_id"));
-            courseComboBox.removeAllItems();
-            courseComboBox.addItem(rs.getString("course_year"));
             emailField.setText(rs.getString("email"));
+
+            String fullCourseYear = rs.getString("course_year"); // e.g., "BS Information Technology - 1"
+            courseComboBox.removeAllItems();
+            if (fullCourseYear != null && fullCourseYear.contains(" - ")) {
+                String[] parts = fullCourseYear.split(" - ");
+                String baseCourse = parts[0]; // This is "BS Information Technology"
+                for (int i = 1; i <= 4; i++) {
+                    courseComboBox.addItem(baseCourse + " - " + i);
+                }
+                courseComboBox.setSelectedItem(fullCourseYear);
+            } else {
+                courseComboBox.addItem(fullCourseYear);
+            }
             String bio = rs.getString("bio");
             bioArea.setText(bio != null ? bio : "");
 
@@ -178,13 +194,14 @@ public class ProfilePanel extends JPanel {
                 }
             }
 
-        String sql = "UPDATE users SET username=?, student_id=?, email=?, bio=? WHERE username=?";
+        String sql = "UPDATE users SET username=?, student_id=?, email=?, bio=?, course_year=? WHERE username=?";
         PreparedStatement pst = conn.prepareStatement(sql);
         pst.setString(1, newUsername);
         pst.setString(2, newStudentID);
         pst.setString(3, emailField.getText());
         pst.setString(4, bioArea.getText());
-        pst.setString(5, currentUsername);
+        pst.setString(5, (String) courseComboBox.getSelectedItem()); 
+        pst.setString(6, currentUsername);
 
         if (pst.executeUpdate() > 0) {  
             this.currentUsername = newUsername; 
@@ -237,6 +254,11 @@ public class ProfilePanel extends JPanel {
                 CustomDialog.show(dialog, "New passwords do not match.", false);
                 return;
             }
+            if (np.equals(cp)) {
+                CustomDialog.show(dialog, "New password cannot be the same as the current one.", false);
+                return;
+            }
+
             if (!np.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$")) {
                 CustomDialog.show(dialog, "Password must be 8+ chars (1 Upper, 1 Lower, 1 Num).", false);
                 return;
