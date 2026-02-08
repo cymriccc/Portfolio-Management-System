@@ -87,7 +87,7 @@ public class PortfolioPanel extends JPanel {
         galleryContainer.removeAll();
         // Fetching ID, Name, and the actual Image data
         System.out.println("DEBUG: Fetching projects for User ID: " + currentUserId);
-        String sql = "SELECT id, project_name, description, upload_date, file_data, file_name FROM portfolios WHERE user_id = ?";
+        String sql = "SELECT id, project_name, description, upload_date, file_data, file_name, image_path FROM portfolios WHERE user_id = ?";
 
         try (Connection conn = Database.getConnection();
             PreparedStatement pst = conn.prepareStatement(sql)) {
@@ -100,20 +100,24 @@ public class PortfolioPanel extends JPanel {
                 String name = rs.getString("project_name");
                 String fileName = rs.getString("file_name");
                 byte[] imgBytes = rs.getBytes("file_data");
+                String imagePath = rs.getString("image_path");
             
+                // 1. PRIORITY: If there is actual uploaded data (BLOB), use it
                 if (imgBytes != null && imgBytes.length > 0) {
-                    System.out.println("DEBUG: File found for: " + name);
-                    if (fileName != null && fileName.toLowerCase().endsWith(".pdf")) {
-                        // Pass a special flag or a "PDF" byte array to your card creator
-                        galleryContainer.add(createProjectCard(id, name, imgBytes, true)); 
-                    } else {
-                        // It's a regular image
-                        galleryContainer.add(createProjectCard(id, name, imgBytes, false));
-                    }
-                } else {
-                    System.out.println("DEBUG: Image data is NULL or EMPTY for project: " + name);
-                    // Add a placeholder if the image is missing
-                   galleryContainer.add(createProjectCard(id, name, null,false)); 
+                    System.out.println("DEBUG: Real upload found for: " + name);
+                    boolean isPdf = (fileName != null && fileName.toLowerCase().endsWith(".pdf"));
+                    galleryContainer.add(createProjectCard(id, name, imgBytes, isPdf)); 
+                } 
+                // 2. FALLBACK: Use the placeholder path if no BLOB exists
+                else if (imagePath != null && !imagePath.isEmpty()) {
+                    System.out.println("DEBUG: Using placeholder path for: " + name);
+                    // We pass the path to a modified card creator or handle conversion
+                    galleryContainer.add(createProjectCardFromPath(id, name, imagePath));
+                } 
+                // 3. EMERGENCY: Default if everything is missing
+                else {
+                    System.out.println("DEBUG: No data or path for: " + name);
+                    galleryContainer.add(createProjectCardFromPath(id, name, "src/assets/image_preview.png"));
                 }
             }
         } catch (Exception e) {
@@ -123,6 +127,43 @@ public class PortfolioPanel extends JPanel {
         galleryContainer.revalidate();
         galleryContainer.repaint();
     }
+
+    private JPanel createProjectCardFromPath(int id, String name, String path) {
+        try {
+            java.net.URL imgURL = getClass().getResource("/assets/default_preview.png");
+        
+            if (imgURL != null) {
+                System.out.println("✅ SUCCESS: Found image via ClassLoader!");
+            
+                // Read raw bytes directly from the URL to avoid scaling errors
+                java.io.InputStream is = imgURL.openStream();
+                byte[] data = is.readAllBytes();
+                is.close();
+            
+                return createProjectCard(id, name, data, false);
+            } else {
+                System.out.println("❌ STILL NOT FOUND: Check the filename one more time.");
+                return createProjectCard(id, name, null, false);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return createProjectCard(id, name, null, false);
+        }
+    }
+
+    // Quick helper to keep your original byte[] method working
+    private byte[] toByteArray(Image img) {
+        java.awt.image.BufferedImage bi = new java.awt.image.BufferedImage(
+            img.getWidth(null), img.getHeight(null), java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g2d = bi.createGraphics();
+        g2d.drawImage(img, 0, 0, null);
+        g2d.dispose();
+       java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        try {
+            javax.imageio.ImageIO.write(bi, "png", baos);
+        } catch (Exception e) {}
+        return baos.toByteArray();
+}
 
     private JPanel createProjectCard(int id, String name, byte[] imgBytes, boolean isPdf) {
         JPanel card = new JPanel(new BorderLayout());

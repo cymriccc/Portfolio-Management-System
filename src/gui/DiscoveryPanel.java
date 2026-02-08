@@ -39,9 +39,9 @@ public class DiscoveryPanel extends JPanel {
         feedContainer.removeAll();
         
         // SQL query to join portfolio with user details, ordered by date
-        String sql = "SELECT p.project_name, p.file_data, p.upload_date, u.full_name " +
-                     "FROM portfolios p JOIN users u ON p.user_id = u.id " +
-                     "ORDER BY p.upload_date DESC";
+        String sql = "SELECT p.project_name, p.file_data, p.image_path, p.upload_date, u.full_name " +
+                    "FROM portfolios p JOIN users u ON p.user_id = u.id " +
+                    "ORDER BY p.upload_date DESC";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement pst = conn.prepareStatement(sql);
@@ -53,6 +53,10 @@ public class DiscoveryPanel extends JPanel {
                 byte[] imgBytes = rs.getBytes("file_data");
                 Timestamp date = rs.getTimestamp("upload_date");
 
+                if (imgBytes == null || imgBytes.length == 0) {
+                    imgBytes = loadPlaceholderBytes(); // We will create this helper below
+                }
+
                 feedContainer.add(createDiscoveryCard(projectName, author, imgBytes, date.toString()));
                 feedContainer.add(Box.createRigidArea(new Dimension(0, 20))); // Spacer
             }
@@ -62,6 +66,24 @@ public class DiscoveryPanel extends JPanel {
 
         feedContainer.revalidate();
         feedContainer.repaint();
+    }
+
+    private byte[] loadPlaceholderBytes() {
+        try {
+            // This is the ClassLoader fix that finally worked for you!
+            java.net.URL imgURL = getClass().getResource("/assets/default_preview.png");
+            
+            if (imgURL != null) {
+                try (java.io.InputStream is = imgURL.openStream()) {
+                   return is.readAllBytes();
+                }
+           } else {
+                System.out.println("❌ Discovery: Could not find /assets/default_preview.png");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null; // If it fails, the card will just show text
     }
 
     private JPanel createDiscoveryCard(String title, String author, byte[] imgData, String date) {
