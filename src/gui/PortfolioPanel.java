@@ -357,6 +357,21 @@ public class PortfolioPanel extends JPanel {
         card.setPreferredSize(new Dimension(240, 220));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 1));
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                showProjectDetails(id); 
+            }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                card.setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR, 2));
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                card.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 1));
+            }
+        });
 
         // --- 1. UNIFIED PREVIEW (Image or PDF) ---
         JLabel imgLabel = new JLabel("", SwingConstants.CENTER);
@@ -425,8 +440,118 @@ public class PortfolioPanel extends JPanel {
         infoPanel.add(btnDelete, BorderLayout.EAST);
         card.add(infoPanel, BorderLayout.SOUTH);
 
+        
+
         return card;
     }
+
+        private void showProjectDetails(int portfolioId) {
+        try (Connection conn = Database.getConnection()) {
+            // Query to get both portfolio and linked project data
+            String sql = "SELECT p.*, pr.description as full_desc, pr.tags " +
+                        "FROM portfolios p LEFT JOIN projects pr ON p.project_id = pr.id " +
+                        "WHERE p.id = ?";
+            
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setInt(1, portfolioId);
+            ResultSet rs = pst.executeQuery();
+
+            if (rs.next()) {
+                String name = rs.getString("project_name");
+                String desc = rs.getString("full_desc");
+                if (desc == null) desc = rs.getString("description"); // Fallback
+                byte[] imgData = rs.getBytes("file_data");
+                String tags = rs.getString("tags");
+
+                // Open the Detail Dialog
+                ProjectDetailDialog details = new ProjectDetailDialog(
+                    (Frame) SwingUtilities.getWindowAncestor(this), name, desc, imgData, tags);
+                details.setVisible(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private class ProjectDetailDialog extends JDialog {
+    public ProjectDetailDialog(Frame owner, String name, String desc, byte[] imgData, String tags) {
+        super(owner, "Project Details", true);
+        setSize(600, 700);
+        setLocationRelativeTo(owner);
+        setLayout(new BorderLayout());
+
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBackground(Color.WHITE);
+        content.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+
+        // 1. Large Image Preview
+        JLabel imgLabel = new JLabel();
+        imgLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        if (imgData != null && imgData.length > 0) {
+            ImageIcon icon = new ImageIcon(imgData);
+            Image img = icon.getImage().getScaledInstance(500, 280, Image.SCALE_SMOOTH);
+            imgLabel.setIcon(new ImageIcon(img));
+        }
+
+        // 2. Title & Tags
+        JLabel lblTitle = new JLabel(name);
+        lblTitle.setFont(new Font("Helvetica", Font.BOLD, 26));
+        lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel lblTags = new JLabel("Tags: " + (tags != null ? tags : "None"));
+        lblTags.setFont(new Font("Helvetica", Font.ITALIC, 14));
+        lblTags.setForeground(new Color(0x6c5ce7));
+        lblTags.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // 3. Non-Clickable Description
+        JTextArea txtDesc = new JTextArea(desc);
+        txtDesc.setFont(new Font("Helvetica", Font.PLAIN, 16));
+        txtDesc.setLineWrap(true);
+        txtDesc.setWrapStyleWord(true);
+        txtDesc.setEditable(false);
+        txtDesc.setFocusable(false); // MAKES IT NON-CLICKABLE/NON-SELECTABLE
+        txtDesc.setOpaque(false);    // Blends into background
+        txtDesc.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+
+        content.add(imgLabel);
+        content.add(Box.createVerticalStrut(20));
+        content.add(lblTitle);
+        content.add(lblTags);
+        content.add(Box.createVerticalStrut(10));
+        content.add(txtDesc);
+
+        // --- 4. Modern Scrollbar (Only appears if necessary) ---
+        JScrollPane scroll = new JScrollPane(content);
+        scroll.setBorder(null);
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED); // AUTO HIDE
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        // Custom Slim UI for the scrollbar
+        scroll.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+            @Override protected void configureScrollBarColors() {
+                this.thumbColor = new Color(0xCED4DA);
+                this.trackColor = Color.WHITE;
+            }
+            @Override protected JButton createDecreaseButton(int orientation) { return createZero(); }
+            @Override protected JButton createIncreaseButton(int orientation) { return createZero(); }
+            private JButton createZero() { JButton b = new JButton(); b.setPreferredSize(new Dimension(0,0)); return b; }
+        });
+
+        add(scroll, BorderLayout.CENTER);
+
+        // 5. Bottom Close Button
+        JButton btnClose = new JButton("CLOSE");
+        btnClose.setPreferredSize(new Dimension(0, 50));
+        btnClose.setBackground(Main.ACCENT_COLOR);
+        btnClose.setForeground(Color.WHITE);
+        btnClose.setFont(new Font("Helvetica", Font.BOLD, 14));
+        btnClose.setFocusPainted(false);
+        btnClose.setBorderPainted(false);
+        btnClose.addActionListener(e -> dispose());
+        add(btnClose, BorderLayout.SOUTH);
+    }
+}
 
     private void deleteProject(int id) {
         // Using your custom Styled Dialog for confirmation
