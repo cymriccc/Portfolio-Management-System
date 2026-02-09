@@ -6,7 +6,6 @@ import java.sql.DriverManager;
 public class Database {
     public static Connection getConnection() {
         try {
-            // Check that your Docker is running on 3307!
             String url = "jdbc:mysql://localhost:3307/student_portfolio";
             String user = "root";
             String password = "studentportfolio";

@@ -17,24 +17,52 @@ public class PortfolioPanel extends JPanel {
     private int currentUserId;
     private Set<String> selectedTags = new HashSet<>();
     private final int MAX_VISIBLE_TAGS = 6;
+    private JTextField searchField;
+    private JPanel rightSidebar;
 
     public PortfolioPanel(int userId) {
         this.currentUserId = userId;
-
-        // MATCHING DASHBOARD COLOR
         setLayout(null);
         setBackground(Main.BG_COLOR); 
+
+        // Title of the Portfolio Section
         JLabel title = new JLabel("My Portfolio Projects");
-        title.setBounds(50, 25, 400, 40);
+        title.setBounds(50, 20, 300, 40);
         title.setFont(new Font("Helvetica", Font.BOLD, 28));
         title.setForeground(new Color(0x2D3436));
         add(title);
 
-        // 2. Tag Filter Bar 
-        tagFilterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        tagFilterPanel.setBackground(Main.BG_COLOR);
-        tagFilterPanel.setBounds(45, 85, 850, 50); 
-        add(tagFilterPanel);
+        // Search Bar
+        searchField = new JTextField(" Search projects...");
+        searchField.setBounds(50, 75, 550, 45);
+        searchField.setFont(new Font("Helvetica", Font.PLAIN, 15));
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xE0E0E0), 2, true), 
+            BorderFactory.createEmptyBorder(10, 15, 10, 15) 
+        ));
+        searchField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                loadProjects(currentUserId, "SEARCH"); 
+            }
+        });
+        searchField.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (searchField.getText().equals(" Search projects...")) {
+                    searchField.setText("");
+                    searchField.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (searchField.getText().isEmpty()) {
+                    searchField.setText(" Search projects...");
+                    searchField.setForeground(Color.GRAY);
+                }
+            }
+        });
+        add(searchField);
 
         // --- Add Button ---
         JButton btnOpenPopup = new JButton("+ ADD PROJECT");
@@ -58,8 +86,18 @@ public class PortfolioPanel extends JPanel {
         btnOpenPopup.addActionListener(e -> showAddPortfolioPopup());
         add(btnOpenPopup);
 
-        // --- Gallery Scroll Area ---
-        galleryContainer = new JPanel(new GridLayout(0, 3, 25, 25));
+        // Right sidebar for filtering of tags
+        rightSidebar = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 15));
+        rightSidebar.setBackground(Color.WHITE); 
+        rightSidebar.setPreferredSize(new Dimension(220, 450)); 
+        rightSidebar.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, new Color(0xEEEEEE)));
+
+        // Main Content Wrapper
+        JPanel mainContentWrapper = new JPanel(new BorderLayout(20, 0)); // 20px gap between them
+        mainContentWrapper.setBackground(Main.BG_COLOR);
+        mainContentWrapper.setBounds(50, 150, 880, 500);
+
+        galleryContainer = new JPanel(new GridLayout(0, 2, 25, 40));
         galleryContainer.setBackground(Main.BG_COLOR);
 
         JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -67,56 +105,84 @@ public class PortfolioPanel extends JPanel {
         wrapper.add(galleryContainer);
 
         JScrollPane scrollPane = new JScrollPane(wrapper);
-        scrollPane.setBounds(50, 150, 850, 450); 
         scrollPane.setBorder(null); 
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        add(scrollPane);
 
-        refreshTagUI();
-        loadProjects(currentUserId, null); 
-    }
+        scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(8, 0)); 
+        scrollPane.getVerticalScrollBar().setOpaque(false);
+        scrollPane.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = new Color(0xCED4DA); 
+                this.trackColor = Main.BG_COLOR;
+            }
+
+            @Override
+            protected JButton createDecreaseButton(int orientation) { return createZeroButton(); }
+            @Override
+            protected JButton createIncreaseButton(int orientation) { return createZeroButton(); }
+
+            private JButton createZeroButton() {
+                JButton button = new JButton();
+                button.setPreferredSize(new Dimension(0, 0));
+                button.setMinimumSize(new Dimension(0, 0));
+                button.setMaximumSize(new Dimension(0, 0));
+                return button;
+            }
+        });
+
+            mainContentWrapper.add(scrollPane, BorderLayout.CENTER); 
+            mainContentWrapper.add(rightSidebar, BorderLayout.EAST);  
+            add(mainContentWrapper); 
+            refreshTagUI();
+            loadProjects(currentUserId);
+        }
+        
     private void refreshTagUI() {
-        tagFilterPanel.removeAll();
+        rightSidebar.removeAll();
 
-        Set<String> allTags = fetchUniqueTags();
-        
-        String sql = "SELECT DISTINCT tags FROM projects WHERE user_id = ?";
-        Set<String> uniqueTags = new java.util.TreeSet<>();
-        
+        JLabel tagHeader = new JLabel("FILTER BY TAGS");
+        tagHeader.setFont(new Font("Helvetica", Font.BOLD, 11));
+        tagHeader.setForeground(new Color(0x636E72));
+        rightSidebar.add(tagHeader);
+
         if (!selectedTags.isEmpty()) {
             JButton clearBtn = new JButton("Clear All ✕");
-            clearBtn.setFont(new Font("Helvetica", Font.BOLD, 12));
-            clearBtn.setForeground(new Color(0x636E72));
-            clearBtn.setContentAreaFilled(false);
-            clearBtn.setBorderPainted(false);
-            clearBtn.setFocusPainted(false);
-            clearBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            styleGhostButton(clearBtn);
             clearBtn.addActionListener(e -> {
                 selectedTags.clear();
                 refreshTagUI();
                 loadProjects(currentUserId, null);
             });
-            tagFilterPanel.add(clearBtn);
+            rightSidebar.add(clearBtn);
         }
 
-        // 2. Render Tag Pills - This is now OUTSIDE the 'if' block
+        Set<String> allTags = fetchUniqueTags();
         int count = 0;
+        
         for (String tag : allTags) {
             if (count < MAX_VISIBLE_TAGS) {
-                tagFilterPanel.add(createTagPill(tag));
+                JToggleButton pill = createTagPill(tag);
+                pill.setPreferredSize(new Dimension(180, 40));
+                rightSidebar.add(pill);
                 count++;
             } else {
-                JButton moreBtn = new JButton("+ " + (allTags.size() - MAX_VISIBLE_TAGS) + " More");
-                styleGhostButton(moreBtn);
-                moreBtn.addActionListener(e -> showAllTagsPopup(allTags));
-                tagFilterPanel.add(moreBtn);
-                break;
+                break; 
             }
         }
 
-        tagFilterPanel.revalidate();
-        tagFilterPanel.repaint();
+        if (allTags.size() > MAX_VISIBLE_TAGS) {
+            int remaining = allTags.size() - MAX_VISIBLE_TAGS;
+            JButton moreBtn = new JButton("+ " + remaining + " More");
+            styleGhostButton(moreBtn); 
+            moreBtn.setPreferredSize(new Dimension(180, 40));
+            moreBtn.addActionListener(e -> showAllTagsPopup(allTags));
+            rightSidebar.add(moreBtn);
+        }
+
+        rightSidebar.revalidate();
+        rightSidebar.repaint();
     }
 
     private JToggleButton createTagPill(String tag) {
@@ -269,34 +335,62 @@ public class PortfolioPanel extends JPanel {
         return uniqueTags;
     }
 
-    // Updated loadProjects to accept a filter string
     public void loadProjects(int userId, String filterTrigger) {
         galleryContainer.removeAll();
-        StringBuilder sql = new StringBuilder("SELECT p.* FROM portfolios p ");
+
+        String searchText = searchField.getText().trim().toLowerCase();
+
+        if (searchText.equals("search projects...") || searchText.isEmpty()) {
+            searchText = ""; 
+        }
+            
+        StringBuilder sql = new StringBuilder("SELECT * FROM portfolios WHERE user_id = ?");
+
+        if (!searchText.isEmpty()) {
+            sql.append(" AND LOWER(project_name) LIKE ?");
+    }
+
         if (!selectedTags.isEmpty()) {
-            sql.append("JOIN projects pr ON p.project_id = pr.id WHERE p.user_id = ? AND (");
-            sql.append(selectedTags.stream().map(t -> "pr.tags LIKE ?").collect(Collectors.joining(" OR ")));
+            sql.append(" AND project_id IN (SELECT id FROM projects WHERE ");
+            sql.append(selectedTags.stream().map(t -> "tags LIKE ?").collect(Collectors.joining(" OR ")));
             sql.append(")");
-        } else {
-            sql.append("WHERE p.user_id = ?");
         }
 
         try (Connection conn = Database.getConnection();
-             PreparedStatement pst = conn.prepareStatement(sql.toString())) {
-            pst.setInt(1, currentUserId);
-            if (!selectedTags.isEmpty()) {
-                int i = 2;
-                for (String tag : selectedTags) pst.setString(i++, "%" + tag + "%");
+            PreparedStatement pst = conn.prepareStatement(sql.toString())) {
+            
+            int paramIndex = 1;
+            pst.setInt(paramIndex++, currentUserId);
+
+            if (!searchText.isEmpty()) {
+                pst.setString(paramIndex++, "%" + searchText + "%");
             }
+
+            if (!selectedTags.isEmpty()) {
+                for (String tag : selectedTags) {
+                    pst.setString(paramIndex++, "%" + tag + "%");
+                }
+            }
+
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id");
                 String name = rs.getString("project_name");
                 byte[] imgBytes = rs.getBytes("file_data");
                 String fileName = rs.getString("file_name");
-                galleryContainer.add(createProjectCard(id, name, imgBytes, fileName != null && fileName.endsWith(".pdf")));
+                
+                galleryContainer.add(createProjectCard(id, name, imgBytes, 
+                    fileName != null && fileName.endsWith(".pdf")));
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        
+        galleryContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 50, 0)); 
+        galleryContainer.revalidate();
+        galleryContainer.repaint();
+
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        }
+
         galleryContainer.revalidate();
         galleryContainer.repaint();
     }
@@ -359,17 +453,15 @@ public class PortfolioPanel extends JPanel {
         card.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 1));
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
         card.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                showProjectDetails(id); 
-            }
-            @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                card.setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR, 2));
+                card.setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR, 1));
             }
-            @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
                 card.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 1));
+            }
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                showProjectDetails(id, isPdf);
             }
         });
 
@@ -445,56 +537,84 @@ public class PortfolioPanel extends JPanel {
         return card;
     }
 
-        private void showProjectDetails(int portfolioId) {
+        private void showProjectDetails(int portfolioId, boolean isPdf) {
         try (Connection conn = Database.getConnection()) {
             // Query to get both portfolio and linked project data
-            String sql = "SELECT p.*, pr.description as full_desc, pr.tags " +
-                        "FROM portfolios p LEFT JOIN projects pr ON p.project_id = pr.id " +
-                        "WHERE p.id = ?";
+            String sql = "SELECT p.*, pr.tags FROM portfolios p " +
+                     "LEFT JOIN projects pr ON p.project_id = pr.id WHERE p.id = ?";
             
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setInt(1, portfolioId);
             ResultSet rs = pst.executeQuery();
 
             if (rs.next()) {
-                String name = rs.getString("project_name");
-                String desc = rs.getString("full_desc");
-                if (desc == null) desc = rs.getString("description"); // Fallback
-                byte[] imgData = rs.getBytes("file_data");
-                String tags = rs.getString("tags");
+            String name = rs.getString("project_name");
+            byte[] imgData = rs.getBytes("file_data");
+            String tags = rs.getString("tags");
+            String desc = "This is a detailed view of your project: " + name; 
 
-                // Open the Detail Dialog
-                ProjectDetailDialog details = new ProjectDetailDialog(
-                    (Frame) SwingUtilities.getWindowAncestor(this), name, desc, imgData, tags);
-                details.setVisible(true);
+            // LAUNCH THE MODERN DIALOG
+            ProjectDetailDialog dialog = new ProjectDetailDialog(
+                (Frame) SwingUtilities.getWindowAncestor(this), 
+                name, desc, imgData, tags, isPdf
+            );
+            dialog.setVisible(true);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        
     }
 
     private class ProjectDetailDialog extends JDialog {
-    public ProjectDetailDialog(Frame owner, String name, String desc, byte[] imgData, String tags) {
+    public ProjectDetailDialog(Frame owner, String name, String desc, byte[] imgData, String tags, boolean isPdf) {
         super(owner, "Project Details", true);
         setSize(600, 700);
         setLocationRelativeTo(owner);
-        setLayout(new BorderLayout());
+        setUndecorated(true);
 
+        JPanel mainContainer = new JPanel(new BorderLayout());
+        // SIGNATURE BLUE BORDER
+        mainContainer.setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR, 2));
+        mainContainer.setBackground(Color.WHITE);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Color.WHITE);
+        header.setPreferredSize(new Dimension(600, 50));
+        
+        mainContainer.add(header, BorderLayout.NORTH);
+
+        // --- 2. SCROLLABLE CONTENT ---
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBackground(Color.WHITE);
-        content.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        content.setBorder(BorderFactory.createEmptyBorder(40, 30, 30, 30));
 
-        // 1. Large Image Preview
-        JLabel imgLabel = new JLabel();
-        imgLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        if (imgData != null && imgData.length > 0) {
-            ImageIcon icon = new ImageIcon(imgData);
-            Image img = icon.getImage().getScaledInstance(500, 280, Image.SCALE_SMOOTH);
-            imgLabel.setIcon(new ImageIcon(img));
+        // LARGE IMAGE
+        JLabel previewLabel = new JLabel();
+        previewLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        if (isPdf) {
+            try {
+                ImageIcon pdfIcon = new ImageIcon("pdf_icon.png"); 
+                Image img = pdfIcon.getImage().getScaledInstance(200, 200, Image.SCALE_SMOOTH);
+                previewLabel.setIcon(new ImageIcon(img));
+            } catch (Exception e) {
+                previewLabel.setText("PDF FILE");
+                previewLabel.setFont(new Font("Helvetica", Font.BOLD, 20));
+            }
+        } else if (imgData != null && imgData.length > 0) {
+            ImageIcon original = new ImageIcon(imgData);
+            int targetW = 500;
+            int targetH = 350; 
+            Image img = original.getImage().getScaledInstance(targetW, targetH, Image.SCALE_SMOOTH);
+            previewLabel.setIcon(new ImageIcon(img));
         }
 
-        // 2. Title & Tags
+        content.add(previewLabel);
+
+        // TEXT ELEMENTS
         JLabel lblTitle = new JLabel(name);
         lblTitle.setFont(new Font("Helvetica", Font.BOLD, 26));
         lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -504,30 +624,27 @@ public class PortfolioPanel extends JPanel {
         lblTags.setForeground(new Color(0x6c5ce7));
         lblTags.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // 3. Non-Clickable Description
         JTextArea txtDesc = new JTextArea(desc);
         txtDesc.setFont(new Font("Helvetica", Font.PLAIN, 16));
         txtDesc.setLineWrap(true);
         txtDesc.setWrapStyleWord(true);
         txtDesc.setEditable(false);
-        txtDesc.setFocusable(false); // MAKES IT NON-CLICKABLE/NON-SELECTABLE
-        txtDesc.setOpaque(false);    // Blends into background
-        txtDesc.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+        txtDesc.setFocusable(false);
+        txtDesc.setOpaque(false);
+        txtDesc.setBorder(BorderFactory.createEmptyBorder(25, 0, 25, 0));
 
-        content.add(imgLabel);
         content.add(Box.createVerticalStrut(20));
         content.add(lblTitle);
         content.add(lblTags);
-        content.add(Box.createVerticalStrut(10));
         content.add(txtDesc);
 
-        // --- 4. Modern Scrollbar (Only appears if necessary) ---
+        // MODERN SCROLLBAR
         JScrollPane scroll = new JScrollPane(content);
         scroll.setBorder(null);
-        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED); // AUTO HIDE
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        
-        // Custom Slim UI for the scrollbar
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        scroll.getVerticalScrollBar().setPreferredSize(new Dimension(8, 0));
         scroll.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
             @Override protected void configureScrollBarColors() {
                 this.thumbColor = new Color(0xCED4DA);
@@ -538,9 +655,8 @@ public class PortfolioPanel extends JPanel {
             private JButton createZero() { JButton b = new JButton(); b.setPreferredSize(new Dimension(0,0)); return b; }
         });
 
-        add(scroll, BorderLayout.CENTER);
+        mainContainer.add(scroll, BorderLayout.CENTER);
 
-        // 5. Bottom Close Button
         JButton btnClose = new JButton("CLOSE");
         btnClose.setPreferredSize(new Dimension(0, 50));
         btnClose.setBackground(Main.ACCENT_COLOR);
@@ -550,6 +666,10 @@ public class PortfolioPanel extends JPanel {
         btnClose.setBorderPainted(false);
         btnClose.addActionListener(e -> dispose());
         add(btnClose, BorderLayout.SOUTH);
+        
+        add(mainContainer);
+
+        
     }
 }
 
