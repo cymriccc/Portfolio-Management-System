@@ -14,8 +14,8 @@ import main.Main;
 public class PortfolioPanel extends JPanel {
     private JPanel galleryContainer;
     private JPanel tagFilterPanel;
-    private int currentUserId;
-    private Set<String> selectedTags = new HashSet<>();
+    private int currentUserId; 
+    private Set<String> selectedTags = new HashSet<>(); // To keep track of selected tags for filtering
     private final int MAX_VISIBLE_TAGS = 8;
     private JTextField searchField;
     private JPanel rightSidebar;
@@ -40,6 +40,7 @@ public class PortfolioPanel extends JPanel {
             BorderFactory.createLineBorder(new Color(0xE0E0E0), 2, true), 
             BorderFactory.createEmptyBorder(10, 15, 10, 15) 
         ));
+
         searchField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent e) {
                 loadProjects(currentUserId, "SEARCH"); 
@@ -110,6 +111,7 @@ public class PortfolioPanel extends JPanel {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
+        // Modern slim scrollbar UI
         scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(8, 0)); 
         scrollPane.getVerticalScrollBar().setOpaque(false);
         scrollPane.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
@@ -120,9 +122,11 @@ public class PortfolioPanel extends JPanel {
             }
 
             @Override
-            protected JButton createDecreaseButton(int orientation) { return createZeroButton(); }
+            protected JButton createDecreaseButton(int orientation) { 
+                return createZeroButton(); }
             @Override
-            protected JButton createIncreaseButton(int orientation) { return createZeroButton(); }
+            protected JButton createIncreaseButton(int orientation) { 
+                return createZeroButton(); }
 
             private JButton createZeroButton() {
                 JButton button = new JButton();
@@ -143,6 +147,7 @@ public class PortfolioPanel extends JPanel {
     private void refreshTagUI() {
         rightSidebar.removeAll();
 
+        // Header with "Filter by Tags" and "Clear All" button
         JPanel headerContainer = new JPanel(new BorderLayout());
         headerContainer.setBackground(Color.WHITE);
         headerContainer.setPreferredSize(new Dimension(200, 40));
@@ -159,7 +164,7 @@ public class PortfolioPanel extends JPanel {
         if (!selectedTags.isEmpty() || hasSearch) {
             JButton clearBtn = new JButton("Clear All");
             clearBtn.setFont(new Font("Helvetica", Font.BOLD, 11));
-            clearBtn.setForeground(Main.ACCENT_COLOR); // Uniform Purple
+            clearBtn.setForeground(Main.ACCENT_COLOR); 
             clearBtn.setBorder(null);
             clearBtn.setContentAreaFilled(false);
             clearBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -175,13 +180,14 @@ public class PortfolioPanel extends JPanel {
         }
         rightSidebar.add(headerContainer);
 
+        // Fetch unique tags from the database and create pills
         Set<String> allTags = fetchUniqueTags();
         int count = 0;
         
         for (String tag : allTags) {
             if (count < MAX_VISIBLE_TAGS) {
                 JToggleButton pill = createTagPill(tag);
-                pill.setPreferredSize(new Dimension(190, 38)); // Slightly adjusted for sidebar width
+                pill.setPreferredSize(new Dimension(190, 38));
                 rightSidebar.add(pill);
                 count++;
             } else {
@@ -202,6 +208,7 @@ public class PortfolioPanel extends JPanel {
         rightSidebar.repaint();
     }
 
+    // Creates a toggle button styled as a pill for a given tag
     private JToggleButton createTagPill(String tag) {
         JToggleButton tagBtn = new JToggleButton(tag);
         tagBtn.setFocusPainted(false);
@@ -209,7 +216,6 @@ public class PortfolioPanel extends JPanel {
         tagBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         tagBtn.setFont(new Font("Helvetica", Font.PLAIN, 13));
 
-        // Pill Styling
         tagBtn.setBackground(tagBtn.isSelected() ? Main.ACCENT_COLOR : Color.WHITE);
         tagBtn.setForeground(tagBtn.isSelected() ? Color.WHITE : new Color(0x2D3436));
         tagBtn.setBorder(BorderFactory.createCompoundBorder(
@@ -217,6 +223,7 @@ public class PortfolioPanel extends JPanel {
             BorderFactory.createEmptyBorder(8, 18, 8, 18)
         ));
 
+        // Toggle selection and update filters on click
         tagBtn.addActionListener(e -> {
             if (tagBtn.isSelected()) selectedTags.add(tag);
             else selectedTags.remove(tag);
@@ -226,6 +233,7 @@ public class PortfolioPanel extends JPanel {
         return tagBtn;
     }
 
+    // Styles the "More" button in the tag filter sidebar
     private void styleGhostButton(JButton btn) {
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
@@ -238,6 +246,7 @@ public class PortfolioPanel extends JPanel {
     ));
     }
 
+    // Displays a popup with all tags when "More" is clicked
     private void showAllTagsPopup(Set<String> allTags) {
         TagSelectionDialog dialog = new TagSelectionDialog(
             (Frame) SwingUtilities.getWindowAncestor(this), 
@@ -249,6 +258,7 @@ public class PortfolioPanel extends JPanel {
         loadProjects(currentUserId, "FILTER");
     }
 
+    // Custom dialog to show all tags with checkboxes for selection
     private class TagSelectionDialog extends JDialog {
         public TagSelectionDialog(Frame owner, Set<String> allTags, Set<String> selected) {
             super(owner, true);
@@ -260,7 +270,7 @@ public class PortfolioPanel extends JPanel {
             content.setBackground(Color.WHITE);
             content.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 2));
 
-            // Header (Simple Title Only)
+            // Header
             JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 20));
             header.setBackground(Color.WHITE);
             JLabel title = new JLabel("All Categories");
@@ -268,7 +278,6 @@ public class PortfolioPanel extends JPanel {
             header.add(title);
             content.add(header, BorderLayout.NORTH);
 
-            // Tag Grid
             JPanel listPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
             listPanel.setBackground(Color.WHITE);
             
@@ -428,42 +437,7 @@ public class PortfolioPanel extends JPanel {
         refreshTagUI();
     }
 
-    private JPanel createProjectCardFromPath(int id, String name, String path) {
-        try {
-            java.net.URL imgURL = getClass().getResource("/assets/default_preview.png");
-        
-            if (imgURL != null) {
-                System.out.println("✅ SUCCESS: Found image via ClassLoader!");
-            
-                // Read raw bytes directly from the URL to avoid scaling errors
-                java.io.InputStream is = imgURL.openStream();
-                byte[] data = is.readAllBytes();
-                is.close();
-            
-                return createProjectCard(id, name, data, false);
-            } else {
-                System.out.println("❌ STILL NOT FOUND: Check the filename one more time.");
-                return createProjectCard(id, name, null, false);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return createProjectCard(id, name, null, false);
-        }
-    }
-
-    private byte[] toByteArray(Image img) {
-        java.awt.image.BufferedImage bi = new java.awt.image.BufferedImage(
-            img.getWidth(null), img.getHeight(null), java.awt.image.BufferedImage.TYPE_INT_ARGB);
-        java.awt.Graphics2D g2d = bi.createGraphics();
-        g2d.drawImage(img, 0, 0, null);
-        g2d.dispose();
-       java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-        try {
-            javax.imageio.ImageIO.write(bi, "png", baos);
-        } catch (Exception e) {}
-        return baos.toByteArray();
-}
-
+    // Creates a card UI component for a project, displaying either an image preview or a PDF icon
     private JPanel createProjectCard(int id, String name, byte[] imgBytes, boolean isPdf) {
         JPanel card = new JPanel(new BorderLayout(0, 5));
         card.setPreferredSize(new Dimension(215, 280));
@@ -483,7 +457,7 @@ public class PortfolioPanel extends JPanel {
             }
         });
 
-        // UNIFIED PREVIEW (Image or PDF) 
+        // Unified Preview(Image or PDF) 
         JLabel imgLabel = new JLabel("", SwingConstants.CENTER);
         imgLabel.setPreferredSize(new Dimension(215, 140));
 
@@ -549,7 +523,8 @@ public class PortfolioPanel extends JPanel {
         return card;
     }
 
-        private void showProjectDetails(int portfolioId, boolean isPdf) {
+    // Data fetcher from database
+    private void showProjectDetails(int portfolioId, boolean isPdf) {
         try (Connection conn = Database.getConnection()) {
             String sql = "SELECT p.project_name, p.file_data, p.file_name, " +
                 "pr.description AS real_desc, pr.tags " + 
@@ -588,7 +563,8 @@ public class PortfolioPanel extends JPanel {
         
     }
 
-    private class ProjectDetailDialog extends JDialog {
+    // User Interface - Custom dialog to show project details with a larger image preview, description, and tags
+    private class ProjectDetailDialog extends JDialog { 
     public ProjectDetailDialog(Frame owner, String name, String desc, byte[] imgData, String tags, boolean isPdf) {
         super(owner, "Project Details", true);
         setSize(600, 700);
@@ -596,7 +572,6 @@ public class PortfolioPanel extends JPanel {
         setUndecorated(true);
 
         JPanel mainContainer = new JPanel(new BorderLayout());
-        // SIGNATURE BLUE BORDER
         mainContainer.setBorder(BorderFactory.createLineBorder(Main.ACCENT_COLOR, 2));
         mainContainer.setBackground(Color.WHITE);
 
@@ -606,7 +581,6 @@ public class PortfolioPanel extends JPanel {
         
         mainContainer.add(header, BorderLayout.NORTH);
 
-        // SCROLLABLE CONTENT
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBackground(Color.WHITE);
