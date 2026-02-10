@@ -16,7 +16,7 @@ public class PortfolioPanel extends JPanel {
     private JPanel tagFilterPanel;
     private int currentUserId;
     private Set<String> selectedTags = new HashSet<>();
-    private final int MAX_VISIBLE_TAGS = 6;
+    private final int MAX_VISIBLE_TAGS = 8;
     private JTextField searchField;
     private JPanel rightSidebar;
 
@@ -25,7 +25,7 @@ public class PortfolioPanel extends JPanel {
         setLayout(null);
         setBackground(Main.BG_COLOR); 
 
-        // Title of the Portfolio Section
+        // Title
         JLabel title = new JLabel("My Portfolio Projects");
         title.setBounds(50, 20, 300, 40);
         title.setFont(new Font("Helvetica", Font.BOLD, 28));
@@ -34,7 +34,7 @@ public class PortfolioPanel extends JPanel {
 
         // Search Bar
         searchField = new JTextField(" Search projects...");
-        searchField.setBounds(50, 75, 550, 45);
+        searchField.setBounds(20, 75, 550, 45);
         searchField.setFont(new Font("Helvetica", Font.PLAIN, 15));
         searchField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(0xE0E0E0), 2, true), 
@@ -64,7 +64,7 @@ public class PortfolioPanel extends JPanel {
         });
         add(searchField);
 
-        // --- Add Button ---
+        // Add Project Button
         JButton btnOpenPopup = new JButton("+ ADD PROJECT");
         btnOpenPopup.setBounds(720, 25, 180, 45);
         btnOpenPopup.setBackground(Main.ACCENT_COLOR); 
@@ -93,12 +93,13 @@ public class PortfolioPanel extends JPanel {
         rightSidebar.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, new Color(0xEEEEEE)));
 
         // Main Content Wrapper
-        JPanel mainContentWrapper = new JPanel(new BorderLayout(20, 0)); // 20px gap between them
+        JPanel mainContentWrapper = new JPanel(new BorderLayout(20, 0)); 
         mainContentWrapper.setBackground(Main.BG_COLOR);
-        mainContentWrapper.setBounds(50, 150, 880, 500);
+        mainContentWrapper.setBounds(20, 140, 920, 560);
 
-        galleryContainer = new JPanel(new GridLayout(0, 2, 25, 40));
+        galleryContainer = new JPanel(new GridLayout(0, 3, 10, 20));
         galleryContainer.setBackground(Main.BG_COLOR);
+        galleryContainer.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
 
         JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         wrapper.setBackground(Main.BG_COLOR);
@@ -142,21 +143,37 @@ public class PortfolioPanel extends JPanel {
     private void refreshTagUI() {
         rightSidebar.removeAll();
 
+        JPanel headerContainer = new JPanel(new BorderLayout());
+        headerContainer.setBackground(Color.WHITE);
+        headerContainer.setPreferredSize(new Dimension(200, 40));
+        headerContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
+
         JLabel tagHeader = new JLabel("FILTER BY TAGS");
         tagHeader.setFont(new Font("Helvetica", Font.BOLD, 11));
         tagHeader.setForeground(new Color(0x636E72));
-        rightSidebar.add(tagHeader);
+        headerContainer.add(tagHeader, BorderLayout.WEST);
 
-        if (!selectedTags.isEmpty()) {
-            JButton clearBtn = new JButton("Clear All ✕");
-            styleGhostButton(clearBtn);
+        boolean hasSearch = !searchField.getText().trim().isEmpty() && 
+                            !searchField.getText().equals(" Search projects...");
+
+        if (!selectedTags.isEmpty() || hasSearch) {
+            JButton clearBtn = new JButton("Clear All");
+            clearBtn.setFont(new Font("Helvetica", Font.BOLD, 11));
+            clearBtn.setForeground(Main.ACCENT_COLOR); // Uniform Purple
+            clearBtn.setBorder(null);
+            clearBtn.setContentAreaFilled(false);
+            clearBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            
             clearBtn.addActionListener(e -> {
                 selectedTags.clear();
+                searchField.setText(" Search projects...");
+                searchField.setForeground(Color.GRAY);
                 refreshTagUI();
-                loadProjects(currentUserId, null);
+                loadProjects(currentUserId);
             });
-            rightSidebar.add(clearBtn);
+            headerContainer.add(clearBtn, BorderLayout.EAST);
         }
+        rightSidebar.add(headerContainer);
 
         Set<String> allTags = fetchUniqueTags();
         int count = 0;
@@ -164,7 +181,7 @@ public class PortfolioPanel extends JPanel {
         for (String tag : allTags) {
             if (count < MAX_VISIBLE_TAGS) {
                 JToggleButton pill = createTagPill(tag);
-                pill.setPreferredSize(new Dimension(180, 40));
+                pill.setPreferredSize(new Dimension(190, 38)); // Slightly adjusted for sidebar width
                 rightSidebar.add(pill);
                 count++;
             } else {
@@ -176,7 +193,7 @@ public class PortfolioPanel extends JPanel {
             int remaining = allTags.size() - MAX_VISIBLE_TAGS;
             JButton moreBtn = new JButton("+ " + remaining + " More");
             styleGhostButton(moreBtn); 
-            moreBtn.setPreferredSize(new Dimension(180, 40));
+            moreBtn.setPreferredSize(new Dimension(190, 38));
             moreBtn.addActionListener(e -> showAllTagsPopup(allTags));
             rightSidebar.add(moreBtn);
         }
@@ -243,7 +260,7 @@ public class PortfolioPanel extends JPanel {
             content.setBackground(Color.WHITE);
             content.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 2));
 
-            // --- 1. Header (Simple Title Only) ---
+            // Header (Simple Title Only)
             JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 20));
             header.setBackground(Color.WHITE);
             JLabel title = new JLabel("All Categories");
@@ -251,7 +268,7 @@ public class PortfolioPanel extends JPanel {
             header.add(title);
             content.add(header, BorderLayout.NORTH);
 
-            // --- 2. Wrapped Tag Grid ---
+            // Tag Grid
             JPanel listPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
             listPanel.setBackground(Color.WHITE);
             
@@ -259,8 +276,6 @@ public class PortfolioPanel extends JPanel {
                 listPanel.add(createTagPill(tag));
             }
 
-            // DYNAMIC HEIGHT CALCULATION: Ensures scrollbar works
-            // Assuming roughly 3-4 tags per row, we calculate height
             int totalTags = allTags.size();
             int estimatedRows = (totalTags / 3) + 1;
             int calculatedHeight = estimatedRows * 60; 
@@ -285,12 +300,12 @@ public class PortfolioPanel extends JPanel {
             
             content.add(scroll, BorderLayout.CENTER);
 
-            // --- 3. Footer (Action Buttons) ---
+            // Footer
             JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
             footer.setBackground(new Color(0xF8F9FA));
             footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0xEEEEEE)));
 
-            // NEW CLOSE BUTTON (Replaces the X)
+            // Close Button
             JButton cancelBtn = new JButton("CLOSE");
             cancelBtn.setPreferredSize(new Dimension(100, 40));
             cancelBtn.setFont(new Font("Helvetica", Font.BOLD, 12));
@@ -301,7 +316,7 @@ public class PortfolioPanel extends JPanel {
             cancelBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
             cancelBtn.addActionListener(e -> dispose());
 
-            // APPLY BUTTON
+            // Apply Button
             JButton doneBtn = new JButton("APPLY FILTERS");
             doneBtn.setPreferredSize(new Dimension(150, 40));
             doneBtn.setBackground(Main.ACCENT_COLOR);
@@ -344,15 +359,19 @@ public class PortfolioPanel extends JPanel {
             searchText = ""; 
         }
             
-        StringBuilder sql = new StringBuilder("SELECT * FROM portfolios WHERE user_id = ?");
+        StringBuilder sql = new StringBuilder(
+            "SELECT p.*, pr.tags FROM portfolios p " +
+            "JOIN projects pr ON p.project_id = pr.id " +
+            "WHERE p.user_id = ?"
+        );
 
         if (!searchText.isEmpty()) {
-            sql.append(" AND LOWER(project_name) LIKE ?");
-    }
+            sql.append(" AND (LOWER(p.project_name) LIKE ? OR LOWER(pr.description) LIKE ?)");
+        }
 
         if (!selectedTags.isEmpty()) {
-            sql.append(" AND project_id IN (SELECT id FROM projects WHERE ");
-            sql.append(selectedTags.stream().map(t -> "tags LIKE ?").collect(Collectors.joining(" OR ")));
+            sql.append(" AND (");
+            sql.append(selectedTags.stream().map(t -> "pr.tags LIKE ?").collect(Collectors.joining(" OR ")));
             sql.append(")");
         }
 
@@ -432,7 +451,6 @@ public class PortfolioPanel extends JPanel {
         }
     }
 
-    // Quick helper to keep your original byte[] method working
     private byte[] toByteArray(Image img) {
         java.awt.image.BufferedImage bi = new java.awt.image.BufferedImage(
             img.getWidth(null), img.getHeight(null), java.awt.image.BufferedImage.TYPE_INT_ARGB);
@@ -447,8 +465,8 @@ public class PortfolioPanel extends JPanel {
 }
 
     private JPanel createProjectCard(int id, String name, byte[] imgBytes, boolean isPdf) {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setPreferredSize(new Dimension(240, 220));
+        JPanel card = new JPanel(new BorderLayout(0, 5));
+        card.setPreferredSize(new Dimension(215, 280));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 1));
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -465,30 +483,26 @@ public class PortfolioPanel extends JPanel {
             }
         });
 
-        // --- 1. UNIFIED PREVIEW (Image or PDF) ---
+        // UNIFIED PREVIEW (Image or PDF) 
         JLabel imgLabel = new JLabel("", SwingConstants.CENTER);
-        imgLabel.setPreferredSize(new Dimension(240, 140));
+        imgLabel.setPreferredSize(new Dimension(215, 140));
 
         if (isPdf) {
-            // 1. If it's a PDF, we use the icon and STOP here
             try {
                 ImageIcon pdfIcon = new ImageIcon("pdf_icon.png");
-                Image scaled = pdfIcon.getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+                Image scaled = pdfIcon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
                 imgLabel.setIcon(new ImageIcon(scaled));
             } catch (Exception e) {
-                imgLabel.setText("PDF"); // Fallback if icon file is missing
+                imgLabel.setText("PDF"); 
             }
         } 
         else if (imgBytes != null && imgBytes.length > 0) {
-            // 2. If it's NOT a PDF, try to render the actual image bytes
             try {
                 ImageIcon icon = new ImageIcon(imgBytes);
                 if (icon.getImageLoadStatus() == MediaTracker.COMPLETE) {
-                    Image img = icon.getImage();
-                    Image scaled = img.getScaledInstance(240, 140, Image.SCALE_SMOOTH);
-                    imgLabel.setIcon(new ImageIcon(scaled));
+                    Image img = icon.getImage().getScaledInstance(200, 130, Image.SCALE_SMOOTH);
+                    imgLabel.setIcon(new ImageIcon(img));
                } else {
-                    // This is what was showing up for your PDF before!
                     imgLabel.setText("Corrupted Image"); 
                 }
             } catch (Exception e) {
@@ -502,14 +516,14 @@ public class PortfolioPanel extends JPanel {
 
         card.add(imgLabel, BorderLayout.CENTER);
 
-        // --- 2. Bottom Info Panel ---
+        // Bottom Info Panel
         JPanel infoPanel = new JPanel(new BorderLayout());
         infoPanel.setBackground(Color.WHITE);
     
         JLabel lblName = new JLabel(" " + name);
         lblName.setFont(new Font("Helvetica", Font.BOLD, 14));
     
-        // --- 3. Delete Button ---
+        // Delete Button
         JButton btnDelete = new JButton("🗑");
         btnDelete.setForeground(Color.RED);
         btnDelete.setBorderPainted(false);
@@ -519,10 +533,10 @@ public class PortfolioPanel extends JPanel {
 
         btnDelete.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                btnDelete.setForeground(new Color(0xC0392B)); // Darker Red
+                btnDelete.setForeground(new Color(0xC0392B)); 
             }
             public void mouseExited(java.awt.event.MouseEvent e) {
-                btnDelete.setForeground(Color.RED); // Original Red
+                btnDelete.setForeground(Color.RED); 
             }
         });
 
@@ -532,16 +546,16 @@ public class PortfolioPanel extends JPanel {
         infoPanel.add(btnDelete, BorderLayout.EAST);
         card.add(infoPanel, BorderLayout.SOUTH);
 
-        
-
         return card;
     }
 
         private void showProjectDetails(int portfolioId, boolean isPdf) {
         try (Connection conn = Database.getConnection()) {
-            // Query to get both portfolio and linked project data
-            String sql = "SELECT p.*, pr.tags FROM portfolios p " +
-                     "LEFT JOIN projects pr ON p.project_id = pr.id WHERE p.id = ?";
+            String sql = "SELECT p.project_name, p.file_data, p.file_name, " +
+                "pr.description AS real_desc, pr.tags " + 
+                "FROM portfolios p " +
+                "LEFT JOIN projects pr ON p.project_id = pr.id " +
+                "WHERE p.id = ?";
             
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setInt(1, portfolioId);
@@ -551,9 +565,16 @@ public class PortfolioPanel extends JPanel {
             String name = rs.getString("project_name");
             byte[] imgData = rs.getBytes("file_data");
             String tags = rs.getString("tags");
-            String desc = "This is a detailed view of your project: " + name; 
+            String desc = rs.getString("real_desc");
+            
+            
+            String fileName = rs.getString("file_name");
+            isPdf = (fileName != null && fileName.toLowerCase().endsWith(".pdf"));
 
-            // LAUNCH THE MODERN DIALOG
+            if (desc == null || desc.trim().isEmpty()) {
+                desc = "No description provided.";
+            }
+
             ProjectDetailDialog dialog = new ProjectDetailDialog(
                 (Frame) SwingUtilities.getWindowAncestor(this), 
                 name, desc, imgData, tags, isPdf
@@ -585,7 +606,7 @@ public class PortfolioPanel extends JPanel {
         
         mainContainer.add(header, BorderLayout.NORTH);
 
-        // --- 2. SCROLLABLE CONTENT ---
+        // SCROLLABLE CONTENT
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBackground(Color.WHITE);
@@ -674,7 +695,6 @@ public class PortfolioPanel extends JPanel {
 }
 
     private void deleteProject(int id) {
-        // Using your custom Styled Dialog for confirmation
         boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to delete this project?");
 
         if (confirm) {
@@ -686,9 +706,8 @@ public class PortfolioPanel extends JPanel {
                 int rowsDeleted = pst.executeUpdate();
             
                 if (rowsDeleted > 0) {
-                    // Success feedback using CustomDialog
                     CustomDialog.show(this, "Project deleted successfully!", true);
-                    loadProjects(currentUserId); // Refresh the gallery cards
+                    loadProjects(currentUserId);
                 }
             
             } catch (Exception e) {
