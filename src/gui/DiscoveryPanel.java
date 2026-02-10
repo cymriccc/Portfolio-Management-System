@@ -554,11 +554,12 @@ public class DiscoveryPanel extends JPanel {
     }
 
     private void showProjectDetails(int projectId) {
-        String sql = "SELECT p.*, pr.tags, pr.description, u.full_name " + 
-                     "FROM portfolios p " +
-                     "LEFT JOIN projects pr ON p.project_id = pr.id " +
-                     "JOIN users u ON p.user_id = u.id " +
-                     "WHERE p.id = ?";
+        String sql = "SELECT p.project_name, p.file_data, p.file_name, " +
+                 "pr.description, pr.tags, u.full_name " +
+                 "FROM portfolios p " +
+                 "JOIN users u ON p.user_id = u.id " + 
+                 "LEFT JOIN projects pr ON p.project_id = pr.id " +
+                 "WHERE p.id = ?";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement pst = conn.prepareStatement(sql)) {
@@ -567,7 +568,7 @@ public class DiscoveryPanel extends JPanel {
 
             if (rs.next()) {
                 String name = rs.getString("project_name");
-                byte[] imgData = rs.getBytes("file_data");
+                byte[] imgData = rs.getBytes("file_data");    
                 String tags = rs.getString("tags");
                 String author = rs.getString("full_name");
                 String desc = rs.getString("description");
