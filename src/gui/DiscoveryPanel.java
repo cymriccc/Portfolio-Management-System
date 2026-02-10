@@ -4,23 +4,23 @@ import db.Database;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashSet; // For managing selected tags in the sidebar
+import java.util.Set; // To store unique tags fetched from the database
 import javax.swing.*;
 import main.Main;
 
 public class DiscoveryPanel extends JPanel {
-    private JPanel feedContainer;
-    private JTextField searchField;
+    private JPanel feedContainer; 
+    private JTextField searchField; 
     private JPanel rightSidebar;
     private Set<String> selectedTags = new HashSet<>();
-    private final int MAX_VISIBLE_TAGS = 8;
+    private final int MAX_VISIBLE_TAGS = 8; // Limit for how many tags to show in the sidebar before showing "See More"
 
     public DiscoveryPanel() {
         setLayout(null);
         setBackground(Main.BG_COLOR);
 
-        // TITLE
+        // Title
         JLabel title = new JLabel("Community Discovery");
         title.setBounds(50, 30, 400, 40);
         title.setFont(new Font("Helvetica", Font.BOLD, 28));
@@ -30,18 +30,20 @@ public class DiscoveryPanel extends JPanel {
         // Search Bar (Mirrored from Portfolio)
         searchField = new JTextField(" Search community projects...");
         searchField.setForeground(Color.GRAY);
-        searchField.setBounds(50, 75, 550, 45);
+        searchField.setBounds(60, 95, 550, 45);
         searchField.setFont(new Font("Helvetica", Font.PLAIN, 15));
         searchField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(0xE0E0E0), 2, true),
             BorderFactory.createEmptyBorder(10, 15, 10, 15)
         ));
-        searchField.addFocusListener(new java.awt.event.FocusAdapter() {
+
+        // this allows us to have the "Search..." placeholder text that disappears when the user clicks on the field
+        searchField.addFocusListener(new java.awt.event.FocusAdapter() { 
             @Override
             public void focusGained(java.awt.event.FocusEvent e) {
                 if (searchField.getText().equals(" Search community projects...")) {
                     searchField.setText("");
-                    searchField.setForeground(Color.BLACK); // Set text to normal color
+                    searchField.setForeground(Color.BLACK); 
                 }
             }
 
@@ -49,7 +51,7 @@ public class DiscoveryPanel extends JPanel {
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (searchField.getText().trim().isEmpty()) {
                     searchField.setText(" Search community projects...");
-                    searchField.setForeground(Color.GRAY); // Set back to placeholder color
+                    searchField.setForeground(Color.GRAY); 
                 }
             }
         });
@@ -59,37 +61,45 @@ public class DiscoveryPanel extends JPanel {
         });
         add(searchField);
 
-        // Main Content Wrapper (Feeds + Sidebar)
+        // Main Content Wrapper (Feeds and Sidebar)
         JPanel mainContentWrapper = new JPanel(new BorderLayout(20, 0));
         mainContentWrapper.setBackground(Main.BG_COLOR);
         mainContentWrapper.setBounds(20, 150, 900, 550);
 
-        feedContainer = new JPanel(new GridLayout(0, 1, 25, 30));
+        feedContainer = new JPanel(new GridLayout(0, 1, 25, 30)); // Dynamic rows, 1 column, with spacing
         feedContainer.setBackground(Main.BG_COLOR);
-        feedContainer.setBorder(BorderFactory.createEmptyBorder(30, 40, 50, 40));
+        feedContainer.setBorder(BorderFactory.createEmptyBorder(20, 40, 40, 40));
 
-        JPanel feedWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        // Wrap feedContainer in a JPanel to center it and add padding
+        JPanel feedWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0)); 
         feedWrapper.setBackground(Main.BG_COLOR);
         feedWrapper.add(feedContainer);
 
+        // Custom ScrollPane for feedContainer to remove the standard scrollbar 
         JScrollPane scrollPane = new JScrollPane(feedContainer);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.getViewport().setBackground(Main.BG_COLOR);
+
+        // We want to avoid horizontal scrolling at all costs for a feed layout
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);  
+        scrollPane.getViewport().setBackground(Main.BG_COLOR); 
 
         scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(8, 0));
         scrollPane.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
             @Override
             protected void configureScrollBarColors() {
-                this.thumbColor = new Color(0xCED4DA); // Subtle gray
+                this.thumbColor = new Color(0xCED4DA);
                 this.trackColor = Main.BG_COLOR;
             }
 
             @Override
-            protected JButton createDecreaseButton(int orientation) { return createZeroButton(); }
+            protected JButton createDecreaseButton(int orientation) { 
+                return createZeroButton(); 
+            }
             @Override
-            protected JButton createIncreaseButton(int orientation) { return createZeroButton(); }
+            protected JButton createIncreaseButton(int orientation) { 
+                return createZeroButton(); 
+            }
 
             private JButton createZeroButton() {
                 JButton button = new JButton();
@@ -98,9 +108,10 @@ public class DiscoveryPanel extends JPanel {
             }
         });
 
+        // Right Sidebar for Tag Filters
         rightSidebar = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 15));
         rightSidebar.setBackground(Color.WHITE);
-        rightSidebar.setPreferredSize(new Dimension(220, 650));
+        rightSidebar.setPreferredSize(new Dimension(220, 500)); 
         rightSidebar.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, new Color(0xEEEEEE)));
 
         mainContentWrapper.add(scrollPane, BorderLayout.CENTER);
@@ -115,12 +126,13 @@ public class DiscoveryPanel extends JPanel {
         feedContainer.removeAll();
 
         String searchKeyword = "";
-        if (searchField != null) {
+        if (searchField != null) {  
             String text = searchField.getText().trim();
-            if (!text.isEmpty() && !text.equals("Search community projects...")) {
+            if (!text.isEmpty() && !text.equals("Search community projects...")) { 
                 searchKeyword = text.toLowerCase();
             }
         }
+        
         StringBuilder sql = new StringBuilder(
             "SELECT p.id, p.project_name, p.file_data, p.file_name, p.upload_date, u.full_name " +
             "FROM portfolios p " +
@@ -128,11 +140,11 @@ public class DiscoveryPanel extends JPanel {
             "LEFT JOIN projects pr ON p.project_id = pr.id WHERE 1=1 "
         );
 
-        if (!searchKeyword.isEmpty()) {
+        if (!searchKeyword.isEmpty()) { // Only apply search filter if user has entered something meaningful
             sql.append("AND LOWER(p.project_name) LIKE ? ");
         }
 
-        if (!selectedTags.isEmpty()) {
+        if (!selectedTags.isEmpty()) { // Only apply tag filters if there are selected tags
         sql.append("AND (");
         for (int i = 0; i < selectedTags.size(); i++) {
             sql.append("pr.tags LIKE ?");
@@ -140,10 +152,10 @@ public class DiscoveryPanel extends JPanel {
                 sql.append(" OR ");
             }
         }
-        sql.append(") ");
+        sql.append(") "); // Wrap tag conditions in parentheses to ensure correct SQL logic when combined with search filter
     }
 
-        sql.append("ORDER BY p.upload_date DESC");
+        sql.append("ORDER BY p.upload_date DESC"); 
 
         try (Connection conn = Database.getConnection();
              PreparedStatement pst = conn.prepareStatement(sql.toString())) {
@@ -168,12 +180,16 @@ public class DiscoveryPanel extends JPanel {
 
                 boolean isPdf = (fileName != null && fileName.toLowerCase().endsWith(".pdf"));
                 JPanel card = createDiscoveryCard(projectName, author, imgBytes, date.toString(), isPdf);
+                
                 card.addMouseListener(new MouseAdapter() {
-                    public void mouseClicked(MouseEvent e) {
-                        showProjectDetails(id);
+                    public void mouseClicked(MouseEvent e) { 
+                        showProjectDetails(id); 
                     }
                 });
 
+                JPanel footer = (JPanel) card.getComponent(2);
+                JButton btnView = (JButton) footer.getComponent(0);
+                btnView.addActionListener(e -> showProjectDetails(id));
                 feedContainer.add(card);
             }
         } catch (Exception e) {
@@ -184,10 +200,15 @@ public class DiscoveryPanel extends JPanel {
         feedContainer.repaint();
     }
 
+    public void refresh() {
+        refreshGlobalTags(); // Clears and re-fetches the sidebar tags
+        loadCommunityFeed(); // Re-runs the SQL query to get the newest posts
+    }
+
     private void refreshGlobalTags() {
         rightSidebar.removeAll();
 
-        // 1. HEADER PANEL (Holds title and hidden reset button)
+        // Header Panel with "FILTER BY TAGS" and conditional "Clear All" button
         JPanel headerContainer = new JPanel(new BorderLayout());
         headerContainer.setBackground(Color.WHITE);
         headerContainer.setPreferredSize(new Dimension(180, 40));
@@ -198,13 +219,13 @@ public class DiscoveryPanel extends JPanel {
         tagHeader.setForeground(new Color(0x636E72));
         headerContainer.add(tagHeader, BorderLayout.WEST);
 
-        // 2. LOGIC: Show "Clear All" ONLY if tags are selected or search is active
+        // Show "Clear All" ONLY if tags are selected or search is active
         boolean hasSearch = !searchField.getText().equals(" Search community projects...") && !searchField.getText().trim().isEmpty();
         
         if (!selectedTags.isEmpty() || hasSearch) {
             JButton resetBtn = new JButton("Clear All");
             resetBtn.setFont(new Font("Helvetica", Font.BOLD, 11));
-            resetBtn.setForeground(new Color(0x6C5CE7)); // Match your Accent Color
+            resetBtn.setForeground(new Color(0x6C5CE7)); 
             resetBtn.setBorder(null);
             resetBtn.setContentAreaFilled(false);
             resetBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -221,18 +242,19 @@ public class DiscoveryPanel extends JPanel {
         
         rightSidebar.add(headerContainer);
 
-        // 3. RENDER TAG BUTTONS
+        // Render Tag Buttons (Limit to MAX_VISIBLE_TAGS, then show "See More" if there are more)
         Set<String> allTags = fetchAllGlobalTags();
         int count = 0;
         for (String tag : allTags) {
-            if (count >= MAX_VISIBLE_TAGS) break;
 
+            if (count >= MAX_VISIBLE_TAGS) 
+                break;
+            
             JButton tagBtn = new JButton(tag);
             tagBtn.setPreferredSize(new Dimension(180, 35));
             tagBtn.setFocusPainted(false);
             tagBtn.setFont(new Font("Helvetica", Font.PLAIN, 12));
 
-            // Styling based on selection
             if (selectedTags.contains(tag)) {
                 tagBtn.setBackground(Main.ACCENT_COLOR);
                 tagBtn.setForeground(Color.WHITE);
@@ -253,7 +275,7 @@ public class DiscoveryPanel extends JPanel {
             count++;
         }
 
-        // 4. "SEE MORE" BUTTON
+        // "SEE MORE" BUTTON
         if (allTags.size() > MAX_VISIBLE_TAGS) {
             JButton seeMoreBtn = new JButton("+ " + (allTags.size() - MAX_VISIBLE_TAGS) + " More");
             seeMoreBtn.setPreferredSize(new Dimension(180, 35));
@@ -266,7 +288,6 @@ public class DiscoveryPanel extends JPanel {
             rightSidebar.add(seeMoreBtn);
         }
 
-        // CRITICAL: Force Swing to redraw the sidebar
         rightSidebar.revalidate();
         rightSidebar.repaint();
     }
@@ -428,10 +449,11 @@ public class DiscoveryPanel extends JPanel {
         return null;
     }
 
+    // This method creates a card for each project in the discovery feed, handling both image and PDF previews
     private JPanel createDiscoveryCard(String title, String author, byte[] imgData, String date, boolean isPdf) {
         JPanel card = new JPanel(new BorderLayout(0, 10));
-        card.setPreferredSize(new Dimension(600, 550));
-        card.setMaximumSize(new Dimension(600, 550));
+        card.setPreferredSize(new Dimension(600, 480));
+        card.setMaximumSize(new Dimension(600, 480));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createEmptyBorder(10, 20, 0, 20));
 
@@ -455,6 +477,7 @@ public class DiscoveryPanel extends JPanel {
             finalImgData = loadPlaceholderBytes();
         }
 
+        // PDF files will show a generic PDF icon, while images will attempt to load the actual image data (or a placeholder if missing)
         if (isPdf) {
             try {
                 ImageIcon pdfIcon = new ImageIcon("pdf_icon.png");
@@ -472,7 +495,7 @@ public class DiscoveryPanel extends JPanel {
             Image img = icon.getImage();
 
             int maxWidth = 560; 
-            int maxHeight = 500;
+            int maxHeight = 300;
             int imgWidth = img.getWidth(null);
             int imgHeight = img.getHeight(null);
 
@@ -499,11 +522,39 @@ public class DiscoveryPanel extends JPanel {
         }
 
         card.add(previewLabel, BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER)); 
+        footer.setBackground(Color.WHITE);
+        footer.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+
+        JButton btnView = new JButton("View Project");
+        btnView.setPreferredSize(new Dimension(560, 45)); 
+        btnView.setFont(new Font("Helvetica", Font.BOLD, 14));
+        btnView.setForeground(new Color(0x575FCF)); 
+        btnView.setBackground(Color.WHITE);
+        btnView.setFocusPainted(false);
+        btnView.setContentAreaFilled(false);
+        btnView.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnView.setBorder(BorderFactory.createLineBorder(new Color(0x575FCF), 1));
+
+        btnView.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                btnView.setBackground(new Color(0xF8F9FA));
+                btnView.setContentAreaFilled(true);
+            }
+            public void mouseExited(MouseEvent e) {
+                btnView.setBackground(Color.WHITE);
+                btnView.setContentAreaFilled(false);
+            }
+        });
+
+        footer.add(btnView);
+        card.add(footer, BorderLayout.SOUTH);
         return card;
     }
 
     private void showProjectDetails(int projectId) {
-        String sql = "SELECT p.*, pr.tags, pr.description, u.full_name " +
+        String sql = "SELECT p.*, pr.tags, pr.description, u.full_name " + 
                      "FROM portfolios p " +
                      "LEFT JOIN projects pr ON p.project_id = pr.id " +
                      "JOIN users u ON p.user_id = u.id " +
@@ -521,12 +572,13 @@ public class DiscoveryPanel extends JPanel {
                 String author = rs.getString("full_name");
                 String desc = rs.getString("description");
                 String displayDesc = "Shared by: " + author + "\n\n" + (desc != null ? desc : "No description provided.");
-                String fileName = rs.getString("file_name");
+
+                String fileName = rs.getString("file_name"); 
                 boolean isPdf = (fileName != null && fileName.toLowerCase().endsWith(".pdf"));
 
                 ProjectDetailDialog dialog = new ProjectDetailDialog(
                     (Frame) SwingUtilities.getWindowAncestor(this),
-                    name, displayDesc, imgData, tags, isPdf
+                    name, displayDesc, imgData, tags, isPdf, fileName
                 );
                 dialog.setVisible(true);
             }
@@ -535,8 +587,9 @@ public class DiscoveryPanel extends JPanel {
         }
     }
 
+    // This dialog shows the project details when a user clicks on a discovery card, including a larger preview and description
     private class ProjectDetailDialog extends JDialog {
-        public ProjectDetailDialog(Frame owner, String name, String desc, byte[] imgData, String tags, boolean isPdf) {
+        public ProjectDetailDialog(Frame owner, String name, String desc, byte[] imgData, String tags, boolean isPdf, String originalFileName) {
             super(owner, "Project Details", true);
             setSize(600, 700);
             setLocationRelativeTo(owner);
@@ -567,6 +620,34 @@ public class DiscoveryPanel extends JPanel {
                 previewLabel.setIcon(new ImageIcon(img));
             }
             content.add(previewLabel);
+
+            if (isPdf && imgData != null) {
+                content.add(Box.createVerticalStrut(15));
+                JButton downloadBtn = new JButton("DOWNLOAD PDF DOCUMENT");
+                downloadBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+                downloadBtn.setPreferredSize(new Dimension(300, 45));
+                downloadBtn.setMaximumSize(new Dimension(300, 45));
+                downloadBtn.setBackground(new Color(0xEB4D4B)); // Red theme for PDF
+                downloadBtn.setForeground(Color.WHITE);
+                downloadBtn.setFont(new Font("Helvetica", Font.BOLD, 14));
+                downloadBtn.setFocusPainted(false);
+                downloadBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                
+                downloadBtn.addActionListener(e -> {
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setSelectedFile(new java.io.File(originalFileName != null ? originalFileName : name + ".pdf"));
+                    if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(fileChooser.getSelectedFile())) {
+                            fos.write(imgData);
+                            JOptionPane.showMessageDialog(this, "File saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            JOptionPane.showMessageDialog(this, "Error saving file.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                });
+                content.add(downloadBtn);
+            }
 
             JLabel lblTitle = new JLabel(name);
             lblTitle.setFont(new Font("Helvetica", Font.BOLD, 26));
@@ -610,25 +691,23 @@ public class DiscoveryPanel extends JPanel {
     private void showFullImage(byte[] imgData, String title) {
         JDialog viewer = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), title, true);
         viewer.setUndecorated(true);
-        // Dark semi-transparent background
         viewer.setBackground(new Color(0, 0, 0, 230)); 
 
         ImageIcon icon = new ImageIcon(imgData);
         JLabel imageLabel = new JLabel(icon);
-        
-        // 1. SET ZOOM/PAN CURSOR
+    
+        // SET ZOOM/PAN CURSOR
         imageLabel.setCursor(new Cursor(Cursor.MOVE_CURSOR));
-
         JScrollPane scroll = new JScrollPane(imageLabel);
         scroll.setBorder(null);
         scroll.setOpaque(false);
         scroll.getViewport().setOpaque(false);
         
-        // 2. HIDE ALL SCROLLBARS
+        // HIDE ALL SCROLLBARS
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
-        // 3. ENABLE MOUSE PANNING (Click and Drag to move image)
+        // ENABLE MOUSE PANNING (Click and Drag to move image)
         MouseAdapter ma = new MouseAdapter() {
             private Point origin;
             @Override
@@ -657,7 +736,6 @@ public class DiscoveryPanel extends JPanel {
             }
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Right-click or Double-click to exit
                 if (SwingUtilities.isRightMouseButton(e) || e.getClickCount() == 2) {
                     viewer.dispose();
                 }
@@ -666,16 +744,15 @@ public class DiscoveryPanel extends JPanel {
         imageLabel.addMouseListener(ma);
         imageLabel.addMouseMotionListener(ma);
 
-        // 4. ADD AN "ESC" KEY TO CLOSE
+        // ADD AN "ESC" KEY TO CLOSE
         viewer.getRootPane().registerKeyboardAction(e -> viewer.dispose(), 
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), 
                 JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-        // Layout
         viewer.setLayout(new BorderLayout());
         viewer.add(scroll, BorderLayout.CENTER);
 
-        // Helper text at the bottom (Optional, for user UX)
+        // Helper text at the bottom 
         JLabel hint = new JLabel("Drag to move • Press ESC or Right-click to close", SwingConstants.CENTER);
         hint.setForeground(new Color(255, 255, 255, 150));
         hint.setFont(new Font("Helvetica", Font.PLAIN, 12));

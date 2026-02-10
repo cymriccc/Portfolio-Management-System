@@ -196,6 +196,15 @@ public class Menu {
                 }
             }
 
+            else if (cardName.equals("DISCOVERY")) {
+                for (Component comp : frameObject.getContainer().getComponents()) {
+                    if (comp instanceof DiscoveryPanel) {
+                        ((DiscoveryPanel) comp).refresh(); // Calls the refresh() method you just added
+                        break;
+                    }
+                }
+            }
+
             btn.setBorder(BorderFactory.createEmptyBorder(0, 40, 0, 0));
             btn.setForeground(new Color(0x575FCF));
         });
