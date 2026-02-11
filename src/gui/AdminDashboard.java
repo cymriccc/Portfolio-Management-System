@@ -515,44 +515,64 @@ public class AdminDashboard extends JFrame {
         int postId = Integer.parseInt(postModel.getValueAt(modelRow, 0).toString());
 
         try (Connection conn = Database.getConnection()) {
-            // Fetch the description (bio) from the projects table
-            String sql = "SELECT description FROM projects WHERE id = ?";
+            String sql = "SELECT project_name, description, image, tags FROM projects WHERE id = ?";
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setInt(1, postId);
             ResultSet rs = pst.executeQuery();
 
             if (rs.next()) {
-                JPanel previewPanel = new JPanel(new BorderLayout(10, 10));
-                
-                // 1. Handle the Image
-                byte[] imgBytes = rs.getBytes("project_image");
+                JPanel previewPanel = new JPanel();
+                previewPanel.setLayout(new BoxLayout(previewPanel, BoxLayout.Y_AXIS));
+                previewPanel.setBackground(Color.WHITE);
+
+                // 1. Project Image Preview
+                byte[] imgBytes = rs.getBytes("image");
                 JLabel imgLabel = new JLabel("No Image Provided", SwingConstants.CENTER);
-                imgLabel.setPreferredSize(new Dimension(300, 200));
+                imgLabel.setPreferredSize(new Dimension(400, 250));
+                imgLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
                 imgLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
-                if (imgBytes != null) {
+                if (imgBytes != null && imgBytes.length > 0) {
                     ImageIcon icon = new ImageIcon(imgBytes);
-                    // Scale image to fit the preview window nicely
-                    Image img = icon.getImage().getScaledInstance(300, 200, Image.SCALE_SMOOTH);
+                    Image img = icon.getImage().getScaledInstance(400, 250, Image.SCALE_SMOOTH);
                     imgLabel.setIcon(new ImageIcon(img));
                     imgLabel.setText(""); 
                 }
- 
-                // 2. Handle the Description
+
+                // 2. Project Name
+                JLabel lblName = new JLabel(rs.getString("project_name"));
+                lblName.setFont(new Font("Helvetica", Font.BOLD, 22));
+                lblName.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+                // 3. Project Tags
+                String tags = rs.getString("tags");
+                JLabel lblTags = new JLabel("Tags: " + (tags != null ? tags : "None"));
+                lblTags.setFont(new Font("Helvetica", Font.ITALIC, 14));
+                lblTags.setForeground(new Color(0x6c5ce7));
+                lblTags.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+                // 4. Project Description
                 String content = rs.getString("description");
-                JTextArea textArea = new JTextArea(content != null ? content : "Empty description.");
+                JTextArea textArea = new JTextArea(content != null ? content : "No description provided.");
                 textArea.setEditable(false);
                 textArea.setLineWrap(true);
                 textArea.setWrapStyleWord(true);
+                textArea.setFont(new Font("Helvetica", Font.PLAIN, 14));
+                textArea.setBackground(new Color(0xF8F9FA));
             
                 JScrollPane scrollPane = new JScrollPane(textArea);
-                scrollPane.setPreferredSize(new Dimension(300, 100));
+                scrollPane.setPreferredSize(new Dimension(400, 100));
+                scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-                // Assemble the UI
-                previewPanel.add(imgLabel, BorderLayout.NORTH);
-                previewPanel.add(scrollPane, BorderLayout.CENTER);
+                // Assemble components with spacing
+                previewPanel.add(imgLabel);
+                previewPanel.add(Box.createVerticalStrut(15));
+                previewPanel.add(lblName);
+                previewPanel.add(lblTags);
+                previewPanel.add(Box.createVerticalStrut(10));
+                previewPanel.add(scrollPane);
 
-                JOptionPane.showMessageDialog(this, previewPanel, "Project Preview", JOptionPane.PLAIN_MESSAGE);
+                JOptionPane.showMessageDialog(this, previewPanel, "Project Details Preview", JOptionPane.PLAIN_MESSAGE);
             }
         } catch (Exception e) {
             e.printStackTrace();
