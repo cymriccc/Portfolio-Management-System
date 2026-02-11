@@ -13,7 +13,6 @@ import main.Main;
 
 public class PortfolioPanel extends JPanel {
     private JPanel galleryContainer;
-    private JPanel tagFilterPanel;
     private int currentUserId; 
     private Set<String> selectedTags = new HashSet<>(); // To keep track of selected tags for filtering
     private final int MAX_VISIBLE_TAGS = 8;
@@ -671,19 +670,20 @@ public class PortfolioPanel extends JPanel {
     }
 }
 
-    private void deleteProject(int id) {
-        boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to delete this project?");
+    private void deleteProject(int projectId) {
+        boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to delete this project and all its files?");
 
         if (confirm) {
             String sql = "DELETE FROM portfolios WHERE id = ?";
+            
             try (Connection conn = Database.getConnection();
                  PreparedStatement pst = conn.prepareStatement(sql)) {
             
-                pst.setInt(1, id);
+                pst.setInt(1, projectId);
                 int rowsDeleted = pst.executeUpdate();
             
                 if (rowsDeleted > 0) {
-                    CustomDialog.show(this, "Project deleted successfully!", true);
+                    CustomDialog.show(this, "Project and its tags removed!", true);
                     loadProjects(currentUserId);
                 }
             
