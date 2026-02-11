@@ -26,13 +26,14 @@ public class AdminDashboard extends JFrame {
         getContentPane().setBackground(Main.BG_COLOR);
         setLayout(null);
 
-        // --- Sidebar ---
+        // Sidebar
         JPanel sidebar = new JPanel();
         sidebar.setBounds(0, 0, 250, 800);
         sidebar.setBackground(Main.DARK_PANEL);
         sidebar.setLayout(null);
         add(sidebar);
 
+        // Sidebar Title
         JLabel lblAdmin = new JLabel("ADMIN PORTAL");
         lblAdmin.setForeground(Color.WHITE);
         lblAdmin.setFont(new Font("Helvetica", Font.BOLD, 20));
@@ -57,7 +58,7 @@ public class AdminDashboard extends JFrame {
         sidebar.add(btnPosts);
         sidebar.add(btnLogout);
 
-        // --- Content Area Setup ---
+        // Content Area Setup
         contentArea = new JPanel(null);
         contentArea.setBounds(250, 0, 950, 800);
         contentArea.setBackground(Main.BG_COLOR);
@@ -71,7 +72,7 @@ public class AdminDashboard extends JFrame {
         // Default View
         showPanel(dashPanel);
 
-        // Switch Logic
+        // Switch Logic for the buttons
         btnDash.addActionListener(e -> {
             updateSummaryCounts();
             showPanel(dashPanel);
@@ -102,7 +103,7 @@ public class AdminDashboard extends JFrame {
             btnUsers.setForeground(new Color(0xD1D8E0));
         });
 
-        // --- Hover Effects for Logout ---
+        // Hover Effects for Logout
         btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
             // Lighten the background slightly or change text color
@@ -123,6 +124,7 @@ public class AdminDashboard extends JFrame {
         addWindowControls();
     }
 
+    // Helper to switch the main content area to show the selected panel
     private void showPanel(JPanel panel) {
         contentArea.removeAll();
         panel.setBounds(0, 0, 950, 800);
@@ -133,7 +135,7 @@ public class AdminDashboard extends JFrame {
         contentArea.revalidate();
     }
 
-    // --- DASHBOARD MANAGEMENT (The Graph) ---
+    // DASHBOARD MANAGEMENT
     private JPanel createDashboardManagement() {
         JPanel panel = new JPanel(null);
         panel.setBackground(Main.BG_COLOR);
@@ -229,6 +231,7 @@ public class AdminDashboard extends JFrame {
         return card;
     }
 
+    // Helper to refresh the counts on the dashboard cards by fetching the latest totals from the database
     public void updateSummaryCounts() {
         // Fetch direct from DB and update the UI labels immediately
         lblTotalPortfolios.setText(String.valueOf(getTotalCount("portfolios")));
@@ -236,6 +239,7 @@ public class AdminDashboard extends JFrame {
         dashPanel.repaint(); // Force graph to redraw too
     }
 
+    // Generic helper to get total count of records from any specified table, used for both users and portfolios
     private int getTotalCount(String tableName) {
         try (Connection conn = Database.getConnection()) {
             String sql = "SELECT COUNT(*) FROM " + tableName;
@@ -245,7 +249,7 @@ public class AdminDashboard extends JFrame {
         return 0;
     }
 
-    // --- MANAGE POSTS (Portfolio Table) ---
+    //  MANAGE POSTS 
     private JPanel createPostManager() {
         JPanel panel = new JPanel(null);
         panel.setBackground(Main.BG_COLOR);
@@ -363,7 +367,7 @@ public class AdminDashboard extends JFrame {
         return panel;
     }
 
-    // --- MANAGE USERS  ---
+    // MANAGE USERS
     private JPanel createUserManager() {
         JPanel panel = new JPanel(null);
         panel.setBackground(Main.BG_COLOR);
@@ -439,7 +443,7 @@ public class AdminDashboard extends JFrame {
         return panel;
     }
 
-    // --- Helper to update the selected user's information in the database ---
+    // Helper to update the selected user's information in the database
     private void updateSelectedUser() {
         int selectedRow = userTable.getSelectedRow();
         if (selectedRow == -1) {
@@ -471,7 +475,7 @@ public class AdminDashboard extends JFrame {
        }
     }   
 
-    // --- Helper to update the selected post's information in the database ---
+    // Helper to update the selected post's information in the database
     private void updateSelectedPost() {
         int selectedRow = postTable.getSelectedRow();
         if (selectedRow == -1) {
@@ -498,7 +502,8 @@ public class AdminDashboard extends JFrame {
             CustomDialog.show(this, "Error: Check date format (YYYY-MM-DD)", false);
         }
     }
-
+    
+    // Helper to show a preview of the selected post's description and image in a dialog
     private void showPostPreview() {
         int selectedRow = postTable.getSelectedRow();
         if (selectedRow == -1) {
@@ -555,7 +560,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // --- Helper for Sidebar Buttons ---
+    // Helper for Sidebar Buttons
     private JButton createSidebarBtn(String text, int y) {
         JButton btn = new JButton(text);
         btn.setBounds(0, y, 250, 50);
@@ -573,7 +578,7 @@ public class AdminDashboard extends JFrame {
         return btn;
     }
 
-    // --- LOGOUT FUNCTION ---
+    // LOGOUT FUNCTION
     private void logout() {
         boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to logout?");
 
@@ -587,7 +592,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // --- Helper to refresh the posts table with the latest data from the database ---
+    // Helper to refresh the posts table with the latest data from the database
     private void refreshPostTable() {
         // Clear existing rows first
        postModel.setRowCount(0);
@@ -614,7 +619,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // --- Helper to load user data into the table ---
+    // Helper to load user data into the table
     private void loadUserData() {
         // 1. Clear the table first so we don't duplicate rows
         if (userModel == null) return;
@@ -644,7 +649,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // --- Helper to delete the selected user from the database and refresh the table ---
+    // Helper to delete the selected user from the database and refresh the table
     private void deleteSelectedUser() {
         int selectedRow = userTable.getSelectedRow();
         if (selectedRow == -1) {
@@ -672,7 +677,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // --- Helper to get monthly activity data for the graph ---
+    // Helper to get monthly activity data for the graph
     private int[] getMonthlyActivityData() {
         int[] monthlyCounts = new int[6]; // To store counts for the last 6 months
         try (Connection conn = Database.getConnection()) {
@@ -693,7 +698,7 @@ public class AdminDashboard extends JFrame {
         return monthlyCounts;
     }
 
-    // --- Helper to get total portfolios count for the dashboard card ---
+    // Helper to get total portfolios count for the dashboard card
     public static int getTotalPortfolios() {
         String sql = "SELECT COUNT(*) FROM portfolios";
         // Add 'Database.' before getConnection()
@@ -709,7 +714,7 @@ public class AdminDashboard extends JFrame {
         return 0;
     }
 
-    // --- Helper to get total users count for the dashboard card ---
+    // Helper to get total users count for the dashboard card
     private void addWindowControls() {
         JLayeredPane lp = this.getLayeredPane();
 
