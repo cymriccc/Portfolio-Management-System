@@ -13,7 +13,6 @@ import main.Main;
 
 public class PortfolioPanel extends JPanel {
     private JPanel galleryContainer;
-    private JPanel tagFilterPanel;
     private int currentUserId; 
     private Set<String> selectedTags = new HashSet<>(); // To keep track of selected tags for filtering
     private final int MAX_VISIBLE_TAGS = 8;
@@ -380,17 +379,20 @@ public class PortfolioPanel extends JPanel {
 
         if (!selectedTags.isEmpty()) {
             sql.append(" AND (");
-            sql.append(selectedTags.stream().map(t -> "pr.tags LIKE ?").collect(Collectors.joining(" OR ")));
-            sql.append(")");
+            String tagPlaceholders = selectedTags.stream()
+                .map(t -> "pr.tags LIKE ?")
+                .collect(Collectors.joining(" OR "));
+            sql.append(tagPlaceholders).append(")");
         }
 
         try (Connection conn = Database.getConnection();
             PreparedStatement pst = conn.prepareStatement(sql.toString())) {
             
             int paramIndex = 1;
-            pst.setInt(paramIndex++, currentUserId);
+            pst.setInt(paramIndex++, userId);
 
             if (!searchText.isEmpty()) {
+                pst.setString(paramIndex++, "%" + searchText + "%");
                 pst.setString(paramIndex++, "%" + searchText + "%");
             }
 
@@ -406,9 +408,9 @@ public class PortfolioPanel extends JPanel {
                 String name = rs.getString("project_name");
                 byte[] imgBytes = rs.getBytes("file_data");
                 String fileName = rs.getString("file_name");
-                
-                galleryContainer.add(createProjectCard(id, name, imgBytes, 
-                    fileName != null && fileName.endsWith(".pdf")));
+            
+                boolean isPdf = (fileName != null && fileName.toLowerCase().endsWith(".pdf"));
+                galleryContainer.add(createProjectCard(id, name, imgBytes, isPdf));
             }
         
         galleryContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 50, 0)); 
@@ -668,19 +670,20 @@ public class PortfolioPanel extends JPanel {
     }
 }
 
-    private void deleteProject(int id) {
-        boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to delete this project?");
+    private void deleteProject(int projectId) {
+        boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to delete this project and all its files?");
 
         if (confirm) {
             String sql = "DELETE FROM portfolios WHERE id = ?";
+            
             try (Connection conn = Database.getConnection();
                  PreparedStatement pst = conn.prepareStatement(sql)) {
             
-                pst.setInt(1, id);
+                pst.setInt(1, projectId);
                 int rowsDeleted = pst.executeUpdate();
             
                 if (rowsDeleted > 0) {
-                    CustomDialog.show(this, "Project deleted successfully!", true);
+                    CustomDialog.show(this, "Project and its tags removed!", true);
                     loadProjects(currentUserId);
                 }
             

@@ -37,7 +37,7 @@ public class DiscoveryPanel extends JPanel {
             BorderFactory.createEmptyBorder(10, 15, 10, 15)
         ));
 
-        // this allows us to have the "Search..." placeholder text that disappears when the user clicks on the field
+        // this allows the system to have the "Search..." placeholder text that disappears when the user clicks on the field
         searchField.addFocusListener(new java.awt.event.FocusAdapter() { 
             @Override
             public void focusGained(java.awt.event.FocusEvent e) {

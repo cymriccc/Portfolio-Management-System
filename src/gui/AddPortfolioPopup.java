@@ -211,7 +211,7 @@ public class AddPortfolioPopup extends JDialog {
                 }
             }
             conn.commit();
-            CustomDialog.show(this, "Project Group Uploaded!", true);
+            CustomDialog.show(this, "Project Uploaded!", true);
             if(parentPanel != null) parentPanel.loadProjects(currentUserId);
             dispose();
         } catch (Exception e) {
