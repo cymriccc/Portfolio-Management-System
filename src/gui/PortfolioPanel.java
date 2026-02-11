@@ -380,17 +380,20 @@ public class PortfolioPanel extends JPanel {
 
         if (!selectedTags.isEmpty()) {
             sql.append(" AND (");
-            sql.append(selectedTags.stream().map(t -> "pr.tags LIKE ?").collect(Collectors.joining(" OR ")));
-            sql.append(")");
+            String tagPlaceholders = selectedTags.stream()
+                .map(t -> "pr.tags LIKE ?")
+                .collect(Collectors.joining(" OR "));
+            sql.append(tagPlaceholders).append(")");
         }
 
         try (Connection conn = Database.getConnection();
             PreparedStatement pst = conn.prepareStatement(sql.toString())) {
             
             int paramIndex = 1;
-            pst.setInt(paramIndex++, currentUserId);
+            pst.setInt(paramIndex++, userId);
 
             if (!searchText.isEmpty()) {
+                pst.setString(paramIndex++, "%" + searchText + "%");
                 pst.setString(paramIndex++, "%" + searchText + "%");
             }
 
@@ -406,9 +409,9 @@ public class PortfolioPanel extends JPanel {
                 String name = rs.getString("project_name");
                 byte[] imgBytes = rs.getBytes("file_data");
                 String fileName = rs.getString("file_name");
-                
-                galleryContainer.add(createProjectCard(id, name, imgBytes, 
-                    fileName != null && fileName.endsWith(".pdf")));
+            
+                boolean isPdf = (fileName != null && fileName.toLowerCase().endsWith(".pdf"));
+                galleryContainer.add(createProjectCard(id, name, imgBytes, isPdf));
             }
         
         galleryContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 50, 0)); 

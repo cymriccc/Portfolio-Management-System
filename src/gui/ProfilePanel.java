@@ -93,6 +93,10 @@ public class ProfilePanel extends JPanel {
 
         add(createLabel("Email Address", x, y + 370));
         emailField = createField(x, y + 395, w, h); 
+        emailField.setFocusable(false);
+        emailField.setEnabled(true);
+        emailField.setEditable(false);
+        emailField.setBackground(new Color(0xEEEEEE)); 
         add(emailField);
 
         add(createLabel("Short Bio", x, y + 440));

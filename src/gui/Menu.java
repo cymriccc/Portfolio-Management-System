@@ -130,23 +130,18 @@ public class Menu {
         logoutBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
     
         logoutBtn.addActionListener(e -> {
-            // 1. Get the current window to use as the parent for the dialog
-           Window currentWindow = SwingUtilities.getWindowAncestor(logoutBtn);
-    
-           // 2. Call your custom Yes/No dialog
-           // Casting currentWindow to Frame since showConfirm expects a Frame
-           boolean confirm = gui.CustomDialog.showConfirm((Frame)currentWindow, "Are you sure you want to logout?");
-    
-           if (confirm) {
-               // 3. Open the Login window
-               new gui.LoginForm().setVisible(true);
+            Window currentWindow = SwingUtilities.getWindowAncestor(logoutBtn);
+            boolean confirm = gui.CustomDialog.showConfirm((Frame)currentWindow, "Are you sure you want to logout?");
+            if (confirm) {
+                gui.LoginForm login = new gui.LoginForm();
+                gui.CustomDialog.show((Frame)currentWindow, "Logged out successfully!", true);
+                login.setVisible(true);
 
-              // 4. Close the current Dashboard window
-              if (currentWindow != null) {
-                  currentWindow.dispose();
-               }
-           }
-        }); 
+                if (currentWindow != null) {
+                    currentWindow.dispose();
+                }
+            }
+        });
 
         // Hover Logic for Logout Button
         logoutBtn.addMouseListener(new MouseAdapter() {
