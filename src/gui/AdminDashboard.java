@@ -453,30 +453,120 @@ public class AdminDashboard extends JFrame {
 
         int modelRow = userTable.convertRowIndexToModel(selectedRow);
         String userId = userModel.getValueAt(modelRow, 0).toString();
-        String name = userModel.getValueAt(modelRow, 1).toString();
-        String studentId = userModel.getValueAt(modelRow, 2).toString();
-        String role = userModel.getValueAt(modelRow, 3).toString();
-        String email = userModel.getValueAt(modelRow, 4).toString();
-
+        
+        // FETCH DATA DIRECT FROM DB
+        String currentUsername = "", currentFullName = "", currentStudentId = "", currentEmail = "";
         try (Connection conn = Database.getConnection()) {
-            String sql = "UPDATE users SET full_name=?, student_id=?, role=?, email=? WHERE id=?";
-           PreparedStatement pst = conn.prepareStatement(sql);
-           pst.setString(1, name);
-           pst.setString(2, studentId);
-           pst.setString(3, role);
-           pst.setString(4, email);
-           pst.setString(5, userId);
+            String sql = "SELECT username, full_name, student_id, email FROM users WHERE id = ?";
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setString(1, userId);
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                currentUsername = rs.getString("username");
+                currentFullName = rs.getString("full_name");
+                currentStudentId = rs.getString("student_id");
+                currentEmail = rs.getString("email");
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
 
-           pst.executeUpdate();
-           CustomDialog.show(this, "User updated successfully!", true);
-       } catch (Exception e) {
-           e.printStackTrace();
-           CustomDialog.show(this, "Error updating user.", false);
-       }
+        // UNDECORATED POPUP WINDOW
+        // Matches your minimalist theme and hides the default Windows title bar
+        JDialog editUserDialog = new JDialog(this, true);
+        editUserDialog.setUndecorated(true);
+        editUserDialog.setSize(450, 520);
+        editUserDialog.setLocationRelativeTo(this);
+
+        JPanel mainPanel = new JPanel(null);
+        mainPanel.setBackground(Color.WHITE);
+        mainPanel.setBorder(BorderFactory.createLineBorder(new Color(0x636E72), 1)); // Slate border
+
+        // CUSTOM CLOSE BUTTON
+        JButton closeBtn = new JButton("X");
+        closeBtn.setBounds(400, 5, 45, 30);
+        closeBtn.setFont(new Font("Helvetica", Font.BOLD, 16));
+        closeBtn.setFocusable(false);
+        closeBtn.setBorderPainted(false);
+        closeBtn.setContentAreaFilled(false);
+        closeBtn.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        closeBtn.setForeground(Main.TEXT_COLOR);
+        closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        closeBtn.addActionListener(e -> editUserDialog.dispose());
+        closeBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                closeBtn.setContentAreaFilled(true);
+                closeBtn.setBackground(new Color(0xE74C3C));
+                closeBtn.setForeground(Color.WHITE);
+            }
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                closeBtn.setContentAreaFilled(false);
+                closeBtn.setForeground(Main.TEXT_COLOR);
+            }
+        });
+        mainPanel.add(closeBtn);
+
+        // REFINED FORM LAYOUT
+        JPanel form = new JPanel();
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBackground(Color.WHITE);
+        form.setBounds(50, 50, 350, 420);
+
+        JTextField txtUser = new JTextField(currentUsername);
+        JTextField txtName = new JTextField(currentFullName);
+        JTextField txtId = new JTextField(currentStudentId);
+        JTextField txtEmail = new JTextField(currentEmail);
+
+        for (JTextField f : new JTextField[]{txtUser, txtName, txtId, txtEmail}) {
+            f.setMaximumSize(new Dimension(350, 45));
+            f.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(0xCED4DA)), 
+                f == txtUser ? "Username" : (f == txtName ? "Full Name" : (f == txtId ? "Student ID" : "Email")),
+                0, 0, new Font("Helvetica", Font.BOLD, 10), new Color(0xADBCCE)));
+            form.add(f);
+            form.add(Box.createVerticalStrut(10));
+        }
+
+        JButton btnSave = new JButton("UPDATE USER INFO");
+        btnSave.setMaximumSize(new Dimension(350, 45));
+        btnSave.setBackground(Main.ACCENT_COLOR);
+        btnSave.setForeground(Color.WHITE);
+        btnSave.setFont(new Font("Helvetica", Font.BOLD, 12));
+        btnSave.setFocusPainted(false);
+        btnSave.setBorderPainted(false);
+        btnSave.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnSave.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // UPDATED SQL QUERY
+        btnSave.addActionListener(e -> {
+            try (Connection conn = Database.getConnection()) {
+                String updateSql = "UPDATE users SET username=?, full_name=?, student_id=?, email=? WHERE id=?";
+                PreparedStatement pst = conn.prepareStatement(updateSql);
+                pst.setString(1, txtUser.getText());
+                pst.setString(2, txtName.getText());
+                pst.setString(3, txtId.getText());
+                pst.setString(4, txtEmail.getText());
+                pst.setString(5, userId);
+                pst.executeUpdate();
+            
+                CustomDialog.show(this, "User information updated!", true);
+                loadUserData(); // Refresh the table
+                editUserDialog.dispose();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                CustomDialog.show(this, "Error: Check if username is already taken.", false);
+            }
+        });
+
+        form.add(Box.createVerticalStrut(10));
+        form.add(btnSave);
+        mainPanel.add(form);
+        editUserDialog.add(mainPanel);
+        editUserDialog.setVisible(true);
     }   
 
     // Helper to update the selected post's information in the database
-    private void updateSelectedPost() {
+    private void updateSelectedPost() { 
+        Color idleColor = Main.BG_COLOR; 
+        Color closeHover = new Color(0xE74C3C);
+
         int selectedRow = postTable.getSelectedRow();
         if (selectedRow == -1) {
             CustomDialog.show(this, "Select a post to update.", false);
@@ -484,23 +574,153 @@ public class AdminDashboard extends JFrame {
         }
 
         int modelRow = postTable.convertRowIndexToModel(selectedRow);
-        int postId = Integer.parseInt(postModel.getValueAt(modelRow, 0).toString());
-        String title = postModel.getValueAt(modelRow, 1).toString();
-        String date = postModel.getValueAt(modelRow, 4).toString();
+        int projectId = Integer.parseInt(postModel.getValueAt(modelRow, 0).toString());
 
+        String currentName = "", currentTags = "", currentDesc = "";
         try (Connection conn = Database.getConnection()) {
-            String sql = "UPDATE projects SET project_name=?, status=?, upload_date=? WHERE id=?";
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, title);
-            pst.setString(2, date);
-            pst.setInt(3, postId);
+            String fetchSql = "SELECT project_name, description, tags FROM projects WHERE id = ?";
+            PreparedStatement pst = conn.prepareStatement(fetchSql);
+            pst.setInt(1, projectId);
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                currentName = rs.getString("project_name");
+                currentDesc = rs.getString("description");
+                currentTags = rs.getString("tags");
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
 
-            pst.executeUpdate();
-            CustomDialog.show(this, "Project updated successfully!", true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            CustomDialog.show(this, "Error: Check date format (YYYY-MM-DD)", false);
+        // Create Styled Undecorated Edit Dialog
+        JDialog editDialog = new JDialog(this, true);
+        editDialog.setUndecorated(true);
+        editDialog.setSize(450, 550);
+        editDialog.setLocationRelativeTo(this);
+
+        JPanel mainPanel = new JPanel(null);
+        mainPanel.setBackground(Color.WHITE);
+        mainPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0x636E72), 1),
+            BorderFactory.createLineBorder(Color.WHITE, 10)
+        ));
+
+        JPanel titleBar = new JPanel(null);
+        titleBar.setBounds(0, 0, 450, 40);
+        titleBar.setBackground(Color.WHITE);
+        mainPanel.add(titleBar);
+
+        // Custom Close Button
+        JButton closeBtn = new JButton("X");
+        closeBtn.setBounds(400, 5, 45, 30);
+        closeBtn.setFont(new Font("Helvetica", Font.BOLD, 16));
+        closeBtn.setBackground(idleColor);
+        closeBtn.setForeground(Main.TEXT_COLOR);
+        closeBtn.setBorderPainted(false);
+        closeBtn.setFocusable(false);
+        closeBtn.setContentAreaFilled(false);
+        closeBtn.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        closeBtn.addActionListener(e -> editDialog.dispose());
+
+        closeBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                closeBtn.setContentAreaFilled(true);
+                closeBtn.setBackground(closeHover);
+                closeBtn.setForeground(Color.WHITE);
+            }
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                closeBtn.setContentAreaFilled(false);
+                closeBtn.setBackground(idleColor);
+                closeBtn.setForeground(Main.TEXT_COLOR);
+            }
+        });
+        titleBar.add(closeBtn);
+
+        // Form Content (Edit Inputs)
+        JPanel form = new JPanel();
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBackground(Color.WHITE);
+        form.setBounds(25, 50, 400, 500);
+
+        JLabel lblHeader = new JLabel("PROJECT SETTINGS");
+        lblHeader.setFont(new Font("Helvetica", Font.BOLD, 14));
+        lblHeader.setForeground(new Color(0x636E72));
+        lblHeader.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JTextField txtName = new JTextField(currentName);
+        JTextField txtTags = new JTextField(currentTags != null ? currentTags : "");
+        txtName.setMaximumSize(new Dimension(350, 45));
+        txtTags.setMaximumSize(new Dimension(350, 45));
+
+        JTextArea txtDesc = new JTextArea(currentDesc != null ? currentDesc : "");
+        txtDesc.setLineWrap(true);
+        txtDesc.setWrapStyleWord(true);
+        txtDesc.setFont(new Font("Helvetica", Font.PLAIN, 13));
+
+        JScrollPane scrollDesc = new JScrollPane(txtDesc);
+        scrollDesc.setMaximumSize(new Dimension(350, 150));
+        scrollDesc.setBorder(BorderFactory.createLineBorder(Main.BG_COLOR));
+
+        // Styling the inputs using your theme
+        for (JComponent c : new JComponent[]{txtName, txtTags, scrollDesc}) {
+            c.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(0xCED4DA)),
+                c == txtName ? "Title" : (c == txtTags ? "Tags" : "Description"),
+                0, 0, new Font("Helvetica", Font.BOLD, 10), new Color(0xADBCCE)
+            ));
+            c.setAlignmentX(Component.CENTER_ALIGNMENT);
         }
+
+        // SAVE BUTTON
+        JButton btnSave = new JButton("UPDATE PROJECT");
+        btnSave.setMaximumSize(new Dimension(350, 45));
+        btnSave.setBackground(Main.ACCENT_COLOR);
+        btnSave.setForeground(Color.WHITE);
+        btnSave.setFont(new Font("Helvetica", Font.BOLD, 12));
+        btnSave.setFocusPainted(false);
+        btnSave.setBorderPainted(false);
+        btnSave.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnSave.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // The Save Action (Updates both tables)
+        btnSave.addActionListener(e -> {
+            try (Connection conn = Database.getConnection()) {
+                conn.setAutoCommit(false); 
+            
+                // Update the 'projects' table (Name, Tags, Description)
+                String sqlProj = "UPDATE projects SET project_name=?, description=?, tags=? WHERE id=?";
+                PreparedStatement pst1 = conn.prepareStatement(sqlProj);
+                pst1.setString(1, txtName.getText());
+                pst1.setString(2, txtDesc.getText());
+                pst1.setString(3, txtTags.getText());
+                pst1.setInt(4, projectId);
+                pst1.executeUpdate();
+
+               // Update the 'portfolios' table to keep the name in sync
+                String sqlPort = "UPDATE portfolios SET project_name=? WHERE project_id=?";
+                PreparedStatement pst2 = conn.prepareStatement(sqlPort);
+                pst2.setString(1, txtName.getText());
+                pst2.setInt(2, projectId);
+                pst2.executeUpdate();
+
+                conn.commit();
+                CustomDialog.show(this, "Project updated successfully!", true);
+                refreshPostTable();
+                editDialog.dispose();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                CustomDialog.show(this, "Error updating database.", false);
+            }
+        });
+
+        form.add(lblHeader); form.add(Box.createVerticalStrut(25));
+        form.add(txtName); form.add(Box.createVerticalStrut(15));
+        form.add(txtTags); form.add(Box.createVerticalStrut(15));
+        form.add(scrollDesc); form.add(Box.createVerticalStrut(25));
+        form.add(btnSave);
+
+        mainPanel.add(form);
+        editDialog.add(mainPanel);
+        editDialog.setVisible(true);
     }
     
     // Helper to show a preview of the selected post's description and image in a dialog
@@ -511,68 +731,117 @@ public class AdminDashboard extends JFrame {
             return;
         }
 
-       int modelRow = postTable.convertRowIndexToModel(selectedRow);
+        int modelRow = postTable.convertRowIndexToModel(selectedRow);
         int postId = Integer.parseInt(postModel.getValueAt(modelRow, 0).toString());
 
         try (Connection conn = Database.getConnection()) {
-            String sql = "SELECT project_name, description, image, tags FROM projects WHERE id = ?";
+            String sql = "SELECT p.project_name, pr.description, p.file_data, pr.tags " +
+                        "FROM portfolios p " +
+                        "JOIN projects pr ON p.project_id = pr.id " +
+                        "WHERE p.id = ?";
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setInt(1, postId);
             ResultSet rs = pst.executeQuery();
 
             if (rs.next()) {
-                JPanel previewPanel = new JPanel();
-                previewPanel.setLayout(new BoxLayout(previewPanel, BoxLayout.Y_AXIS));
-                previewPanel.setBackground(Color.WHITE);
+                JDialog previewDialog = new JDialog(this, true);
+                previewDialog.setUndecorated(true);
+                previewDialog.setSize(500, 600);
+                previewDialog.setLocationRelativeTo(this);
 
-                // 1. Project Image Preview
-                byte[] imgBytes = rs.getBytes("image");
+                // Main Container 
+                JPanel mainPanel = new JPanel(null);
+                mainPanel.setBackground(Color.WHITE);
+                mainPanel.setBorder(BorderFactory.createLineBorder(Main.BG_COLOR, 2));
+
+                // Custom Close Button
+                Color idleColor = Color.WHITE;
+                Color closeHover = new Color(0xE74C3C);
+                
+                JButton closeBtn = new JButton("X");
+                closeBtn.setBounds(445, 10, 45, 30);
+                closeBtn.setBackground(idleColor);
+                closeBtn.setForeground(Main.TEXT_COLOR);
+                closeBtn.setBorderPainted(false);
+                closeBtn.setFocusable(false);
+                closeBtn.setFont(new Font("Helvetica", Font.BOLD, 14));
+                closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                
+                // Logic: Dispose dialog instead of exiting system
+                closeBtn.addActionListener(e -> previewDialog.dispose());
+                
+                closeBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+                    public void mouseEntered(java.awt.event.MouseEvent e) {
+                        closeBtn.setBackground(closeHover);
+                        closeBtn.setForeground(Color.WHITE);
+                    }
+                    public void mouseExited(java.awt.event.MouseEvent e) {
+                        closeBtn.setBackground(idleColor);
+                        closeBtn.setForeground(Main.TEXT_COLOR);
+                    }
+                });
+                mainPanel.add(closeBtn);
+
+                // Content Area
+                JPanel content = new JPanel();
+                content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+                content.setBackground(Color.WHITE);
+                content.setBounds(25, 50, 450, 520);
+
+                // Project Image
+                byte[] imgBytes = rs.getBytes("file_data");
                 JLabel imgLabel = new JLabel("No Image Provided", SwingConstants.CENTER);
-                imgLabel.setPreferredSize(new Dimension(400, 250));
+                imgLabel.setPreferredSize(new Dimension(400, 240));
+                imgLabel.setMaximumSize(new Dimension(400, 240));
                 imgLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-                imgLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+                imgLabel.setOpaque(true);
+                imgLabel.setBackground(Main.BG_COLOR);
+                imgLabel.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 1));
 
                 if (imgBytes != null && imgBytes.length > 0) {
                     ImageIcon icon = new ImageIcon(imgBytes);
-                    Image img = icon.getImage().getScaledInstance(400, 250, Image.SCALE_SMOOTH);
+                    Image img = icon.getImage().getScaledInstance(400, 240, Image.SCALE_SMOOTH);
                     imgLabel.setIcon(new ImageIcon(img));
                     imgLabel.setText(""); 
                 }
 
-                // 2. Project Name
-                JLabel lblName = new JLabel(rs.getString("project_name"));
-                lblName.setFont(new Font("Helvetica", Font.BOLD, 22));
+                // Text Info
+                JLabel lblName = new JLabel(rs.getString("project_name").toUpperCase());
+                lblName.setFont(new Font("Helvetica", Font.BOLD, 18));
+                lblName.setForeground(Main.TEXT_COLOR);
                 lblName.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-                // 3. Project Tags
                 String tags = rs.getString("tags");
-                JLabel lblTags = new JLabel("Tags: " + (tags != null ? tags : "None"));
-                lblTags.setFont(new Font("Helvetica", Font.ITALIC, 14));
-                lblTags.setForeground(new Color(0x6c5ce7));
+                JLabel lblTags = new JLabel(tags != null ? tags.replace(",", "  •  ") : "NO TAGS");
+                lblTags.setFont(new Font("Helvetica", Font.BOLD, 11));
+                lblTags.setForeground(Main.ACCENT_COLOR);
                 lblTags.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-                // 4. Project Description
-                String content = rs.getString("description");
-                JTextArea textArea = new JTextArea(content != null ? content : "No description provided.");
-                textArea.setEditable(false);
-                textArea.setLineWrap(true);
-                textArea.setWrapStyleWord(true);
-                textArea.setFont(new Font("Helvetica", Font.PLAIN, 14));
-                textArea.setBackground(new Color(0xF8F9FA));
-            
-                JScrollPane scrollPane = new JScrollPane(textArea);
-                scrollPane.setPreferredSize(new Dimension(400, 100));
-                scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+                JTextArea txtDesc = new JTextArea(rs.getString("description"));
+                txtDesc.setFont(new Font("Helvetica", Font.PLAIN, 14));
+                txtDesc.setForeground(new Color(0x636E72));
+                txtDesc.setLineWrap(true);
+                txtDesc.setWrapStyleWord(true);
+                txtDesc.setEditable(false);
+                txtDesc.setOpaque(false);
 
-                // Assemble components with spacing
-                previewPanel.add(imgLabel);
-                previewPanel.add(Box.createVerticalStrut(15));
-                previewPanel.add(lblName);
-                previewPanel.add(lblTags);
-                previewPanel.add(Box.createVerticalStrut(10));
-                previewPanel.add(scrollPane);
+                JScrollPane scroll = new JScrollPane(txtDesc);
+                scroll.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Main.BG_COLOR));
+                scroll.setPreferredSize(new Dimension(400, 100));
+                scroll.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-                JOptionPane.showMessageDialog(this, previewPanel, "Project Details Preview", JOptionPane.PLAIN_MESSAGE);
+               // Assemble
+                content.add(imgLabel);
+                content.add(Box.createVerticalStrut(20));
+                content.add(lblName);
+                content.add(Box.createVerticalStrut(5));
+                content.add(lblTags);
+                content.add(Box.createVerticalStrut(15));
+                content.add(scroll);
+
+                mainPanel.add(content);
+                previewDialog.add(mainPanel);
+                previewDialog.setVisible(true);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -614,22 +883,23 @@ public class AdminDashboard extends JFrame {
 
     // Helper to refresh the posts table with the latest data from the database
     private void refreshPostTable() {
-        // Clear existing rows first
        postModel.setRowCount(0);
 
         try (Connection conn = Database.getConnection()) {
-            String sql = "SELECT p.id, p.project_name, u.username, 'Active' AS status, p.upload_date " +
+            String sql = "SELECT p.id, p.project_name, u.username, pr.upload_date " +
                      "FROM projects p " +
-                     "JOIN users u ON p.user_id = u.id";
-        
+                     "JOIN users u ON p.user_id = u.id " +
+                     "JOIN portfolios pr ON p.id = pr.project_id " +
+                     "ORDER BY pr.upload_date DESC";
+            
             ResultSet rs = conn.createStatement().executeQuery(sql);
         
             while(rs.next()){
                 postModel.addRow(new Object[]{
-                    rs.getInt("id"), 
-                    rs.getString("project_name"), 
-                    rs.getString("username"), 
-                    rs.getString("status"),
+                    rs.getInt("id"),
+                    rs.getString("project_name"),
+                    rs.getString("username"),
+                    "Active",
                     rs.getString("upload_date")
                 });
             }
