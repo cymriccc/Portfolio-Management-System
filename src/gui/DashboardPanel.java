@@ -16,13 +16,14 @@ public class DashboardPanel extends JPanel {
         setLayout(null);
         setBackground(Main.BG_COLOR);
 
-        // --- ORIGINAL HEADER STYLE ---
+        // Header 
         lblWelcome = new JLabel("Welcome back, " + studentName + "!");
         lblWelcome.setBounds(40, 40, 500, 30);
         lblWelcome.setFont(new Font("Helvetica", Font.PLAIN, 18));
         lblWelcome.setForeground(Main.TEXT_COLOR);
         add(lblWelcome);
 
+        // Course Year
         lblCourse = new JLabel(courseYear != null ? courseYear : "No Course Set");
         lblCourse.setBounds(40, 65, 500, 20);
         lblCourse.setFont(new Font("Helvetica", Font.ITALIC, 14));

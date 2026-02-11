@@ -13,7 +13,6 @@ public class Register extends JFrame {
     private JComboBox<String> cbCourse, cbYear;
     private JPasswordField txtPassword;
     private JButton btnRegister, btnLogin;
-
     private JComboBox<String> cbSec1, cbSec2, cbSec3;
     private JTextField txtAns1, txtAns2, txtAns3;
     private String[] securityQuestions = {
@@ -90,7 +89,7 @@ public class Register extends JFrame {
 
         JLabel passGuide = new JLabel("Min 8 chars, 1 Upper, 1 Lower, 1 Number");
         passGuide.setFont(new Font("Helvetica", Font.PLAIN, 10));
-        passGuide.setForeground(Color.GRAY);
+        passGuide.setForeground(new Color(0x551212));
         passGuide.setBounds(100, 610, 400, 15);
         add(passGuide);
 
@@ -185,7 +184,7 @@ public class Register extends JFrame {
 
         JLabel guideLbl = new JLabel(guide);
         guideLbl.setFont(new Font("Helvetica", Font.PLAIN, 10));
-        guideLbl.setForeground(Color.GRAY);
+        guideLbl.setForeground(new Color(0x551212));
         guideLbl.setBounds(xPos, yPos + 65, width, 15);
         add(guideLbl);
     }
