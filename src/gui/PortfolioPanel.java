@@ -5,7 +5,6 @@ import java.awt.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,7 +14,7 @@ import main.Main;
 public class PortfolioPanel extends JPanel {
     private JPanel galleryContainer;
     private int currentUserId; 
-    private Set<String> selectedTags = new HashSet<>();
+    private Set<String> selectedTags = new HashSet<>(); // To keep track of selected tags for filtering
     private final int MAX_VISIBLE_TAGS = 8;
     private JTextField searchField;
     private JPanel rightSidebar;
@@ -97,7 +96,6 @@ public class PortfolioPanel extends JPanel {
         JPanel mainContentWrapper = new JPanel(new BorderLayout(20, 0)); 
         mainContentWrapper.setBackground(Main.BG_COLOR);
         mainContentWrapper.setBounds(20, 140, 920, 560);
-        add(mainContentWrapper);
 
         galleryContainer = new JPanel(new GridLayout(0, 3, 10, 20));
         galleryContainer.setBackground(Main.BG_COLOR);
@@ -138,12 +136,13 @@ public class PortfolioPanel extends JPanel {
             }
         });
 
-            mainContentWrapper.add(scrollPane, BorderLayout.CENTER);
-            mainContentWrapper.add(rightSidebar, BorderLayout.EAST);
+            mainContentWrapper.add(scrollPane, BorderLayout.CENTER); 
+            mainContentWrapper.add(rightSidebar, BorderLayout.EAST);  
+            add(mainContentWrapper); 
             refreshTagUI();
             loadProjects(currentUserId);
         }
-    // Refreshes the right sidebar UI to show tag filters based on current selection and search state
+        
     private void refreshTagUI() {
         rightSidebar.removeAll();
 
@@ -359,7 +358,6 @@ public class PortfolioPanel extends JPanel {
         return uniqueTags;
     }
 
-    // Data fetcher from database with dynamic SQL construction based on search text and selected tags for filtering
     public void loadProjects(int userId, String filterTrigger) {
         galleryContainer.removeAll();
 
@@ -427,12 +425,10 @@ public class PortfolioPanel extends JPanel {
         galleryContainer.repaint();
     }
 
-    // Overloaded method for initial load without filter trigger
     public void loadProjects(int userId) { 
         loadProjects(userId, null);
     }
 
-    // UI Handler - Opens the Add Portfolio popup dialog and refreshes the tag filters after a new project is added
     private void showAddPortfolioPopup() {
         AddPortfolioPopup popup = new AddPortfolioPopup(
             (Frame) SwingUtilities.getWindowAncestor(this),
@@ -674,59 +670,26 @@ public class PortfolioPanel extends JPanel {
     }
 }
 
-    // Data handler - Deletes a project and all its associated data (including tags) from the database with confirmation and error handling
     private void deleteProject(int projectId) {
-        boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to delete this project and all its data?");
+        boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to delete this project and all its files?");
 
         if (confirm) {
-            try (Connection conn = Database.getConnection()) {
-                conn.setAutoCommit(false);
-
-                try {
-                    // STEP A: Fetch the real Project ID first so we can delete the tags in 'projects'
-                    int realProjectId = -1;
-                    String findIdSql = "SELECT project_id FROM portfolios WHERE id = ?";
-                    try (PreparedStatement pstId = conn.prepareStatement(findIdSql)) {
-                        pstId.setInt(1, projectId);
-                        ResultSet rs = pstId.executeQuery();
-                        if (rs.next()) {
-                            realProjectId = rs.getInt("project_id");
-                        }
-                    }
-
-                    // STEP B: Delete from 'portfolios' first
-                    String sqlPortfolios = "DELETE FROM portfolios WHERE id = ?";
-                    try (PreparedStatement pst1 = conn.prepareStatement(sqlPortfolios)) {
-                        pst1.setInt(1, projectId);
-                        pst1.executeUpdate();
-                    }
-
-                    // STEP C: Delete from 'projects' using the REAL project ID
-                    if (realProjectId != -1) {
-                        String sqlProjects = "DELETE FROM projects WHERE id = ?";
-                        try (PreparedStatement pst2 = conn.prepareStatement(sqlProjects)) {
-                            pst2.setInt(1, realProjectId);
-                            pst2.executeUpdate();
-                        }
-                    }
-
-                    conn.commit();
+            String sql = "DELETE FROM portfolios WHERE id = ?";
+            
+            try (Connection conn = Database.getConnection();
+                 PreparedStatement pst = conn.prepareStatement(sql)) {
+            
+                pst.setInt(1, projectId);
+                int rowsDeleted = pst.executeUpdate();
+            
+                if (rowsDeleted > 0) {
                     CustomDialog.show(this, "Project and its tags removed!", true);
-                
                     loadProjects(currentUserId);
-                    refreshTagUI();
-
-                } catch (SQLException ex) {
-                    conn.rollback();
-                    ex.printStackTrace();
-                    CustomDialog.show(this, "Delete failed: Data was rolled back.", false);
-                } finally {
-                    conn.setAutoCommit(true);
                 }
             
             } catch (Exception e) {
                 e.printStackTrace();
-                CustomDialog.show(this, "Connection Error.", false);
+                CustomDialog.show(this, "Error deleting project.", false);
             }
         }
     }

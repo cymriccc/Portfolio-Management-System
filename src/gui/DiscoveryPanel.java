@@ -325,8 +325,16 @@ public class DiscoveryPanel extends JPanel {
     }
 
     private class TagSelectionDialog extends JDialog {
+        private JPanel listPanel;
+        private JTextField tagSearch;
+        private Set<String> allTags;
+        private Set<String> tempSelected;
+
         public TagSelectionDialog(Frame owner, Set<String> allTags, Set<String> selected) {
             super(owner, true);
+            this.allTags = allTags;
+            this.tempSelected = new HashSet<>(selected);
+
             setSize(500, 450);
             setLocationRelativeTo(owner);
             setUndecorated(true);
@@ -334,20 +342,63 @@ public class DiscoveryPanel extends JPanel {
             JPanel content = new JPanel();
             content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
             content.setBackground(Color.WHITE);
-            content.setBorder(BorderFactory.createEmptyBorder(40, 0, 40, 0));
+            content.setBorder(BorderFactory.createLineBorder(new Color(0xEEEEEE), 1));
 
+            JPanel headerArea = new JPanel();
+            headerArea.setLayout(new BoxLayout(headerArea, BoxLayout.Y_AXIS));
+            headerArea.setBackground(Color.WHITE);
+            headerArea.setBorder(BorderFactory.createEmptyBorder(20, 25, 10, 25));
 
-            // Header
-            JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 20));
-            header.setBackground(Color.WHITE);
             JLabel title = new JLabel("All Categories");
             title.setFont(new Font("Helvetica", Font.BOLD, 22));
-            header.add(title);
-            content.add(header, BorderLayout.NORTH);
+            title.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            tagSearch = new JTextField(" Filter tags...");
+            tagSearch.setMaximumSize(new Dimension(450, 40));
+            tagSearch.setPreferredSize(new Dimension(450, 40));
+            tagSearch.setFont(new Font("Helvetica", Font.PLAIN, 14));
+            tagSearch.setForeground(Color.GRAY);
+            tagSearch.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xE0E0E0), 1, true),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+            ));
+
+            tagSearch.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (tagSearch.getText().equals(" Filter tags...")) {
+                    tagSearch.setText("");
+                    tagSearch.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (tagSearch.getText().trim().isEmpty()) {
+                    tagSearch.setText(" Filter tags...");
+                    tagSearch.setForeground(Color.GRAY); 
+                }
+            }
+        });
+
+        tagSearch.addKeyListener(new KeyAdapter() {
+            public void keyReleased(KeyEvent e) {
+                String query = tagSearch.getText().trim().toLowerCase();
+                if (!query.equals("filter tags...")) {
+                    updateTagList(query);
+                }
+            }
+        });
+
+            headerArea.add(title);
+            headerArea.add(Box.createVerticalStrut(15));
+            headerArea.add(tagSearch);
+            content.add(headerArea, BorderLayout.NORTH);
 
             // Wrapped Tag Grid
-            JPanel listPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
+            listPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
             listPanel.setBackground(Color.WHITE);
+            updateTagList("");
 
             Set<String> tempSelected = new HashSet<>(selected);
 
@@ -376,9 +427,8 @@ public class DiscoveryPanel extends JPanel {
 
             JScrollPane scroll = new JScrollPane(listPanel);
             scroll.setBorder(null);
-            scroll.getVerticalScrollBar().setUnitIncrement(16);
-            scroll.getVerticalScrollBar().setPreferredSize(new Dimension(8, 0));
             scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            content.add(scroll, BorderLayout.CENTER);
 
             scroll.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
                 @Override protected void configureScrollBarColors() {
@@ -431,7 +481,29 @@ public class DiscoveryPanel extends JPanel {
             btn.setForeground(btn.isSelected() ? Color.WHITE : new Color(0x2D3436));
             btn.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 1, true));
         }
+
+        private void updateTagList(String query) {
+            listPanel.removeAll();
+            for (String tag : allTags) {
+                if (query.isEmpty() || tag.toLowerCase().contains(query) || query.equals("filter tags...")) {
+                    JToggleButton pill = new JToggleButton(tag);
+                    pill.setSelected(tempSelected.contains(tag));
+                    pill.setPreferredSize(new Dimension(135, 35));
+                    updatePillStyle(pill);
+                    
+                    pill.addActionListener(e -> {
+                        if (pill.isSelected()) tempSelected.add(tag);
+                        else tempSelected.remove(tag);
+                        updatePillStyle(pill);
+                    });
+                    listPanel.add(pill);
+                }
+            }
+            listPanel.revalidate();
+            listPanel.repaint();
+        }
     }
+
 
     private byte[] loadPlaceholderBytes() {
         try {

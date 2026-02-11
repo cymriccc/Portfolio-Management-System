@@ -23,7 +23,7 @@ public class DashboardPanel extends JPanel {
         lblWelcome.setForeground(Main.TEXT_COLOR);
         add(lblWelcome);
 
-        // Course Year
+        // Course & Year Info
         lblCourse = new JLabel(courseYear != null ? courseYear : "No Course Set");
         lblCourse.setBounds(40, 65, 500, 20);
         lblCourse.setFont(new Font("Helvetica", Font.ITALIC, 14));
@@ -36,14 +36,14 @@ public class DashboardPanel extends JPanel {
         title.setForeground(Main.TEXT_COLOR);
         add(title);
 
-        // --- STAT CARDS ---
+        // Statistics 
         add(createStatCard("Total Projects", 40, 160));
 
         JPanel activityGraph = createActivityGraph();
         activityGraph.setBounds(260, 160, 690, 200);
         add(activityGraph);
 
-        // --- RECENT PROJECTS (MAXIMIZED SPACE) ---
+        // Recent Projects List
         JLabel recentTitle = new JLabel("RECENT PROJECTS");
         recentTitle.setBounds(40, 380, 300, 20);
         recentTitle.setFont(new Font("Helvetica", Font.BOLD, 14));
@@ -53,7 +53,7 @@ public class DashboardPanel extends JPanel {
         recentProjectsContainer = new JPanel();
         recentProjectsContainer.setLayout(null);
         recentProjectsContainer.setBackground(Main.BG_COLOR);
-        recentProjectsContainer.setBounds(40, 410, 930, 300); // Maximized width
+        recentProjectsContainer.setBounds(40, 410, 930, 300);
         add(recentProjectsContainer);
 
         refreshData();
