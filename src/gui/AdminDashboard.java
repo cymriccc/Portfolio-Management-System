@@ -26,13 +26,14 @@ public class AdminDashboard extends JFrame {
         getContentPane().setBackground(Main.BG_COLOR);
         setLayout(null);
 
-        // --- Sidebar ---
+        // Sidebar
         JPanel sidebar = new JPanel();
         sidebar.setBounds(0, 0, 250, 800);
         sidebar.setBackground(Main.DARK_PANEL);
         sidebar.setLayout(null);
         add(sidebar);
 
+        // Sidebar Title
         JLabel lblAdmin = new JLabel("ADMIN PORTAL");
         lblAdmin.setForeground(Color.WHITE);
         lblAdmin.setFont(new Font("Helvetica", Font.BOLD, 20));
@@ -57,7 +58,7 @@ public class AdminDashboard extends JFrame {
         sidebar.add(btnPosts);
         sidebar.add(btnLogout);
 
-        // --- Content Area Setup ---
+        // Content Area Setup
         contentArea = new JPanel(null);
         contentArea.setBounds(250, 0, 950, 800);
         contentArea.setBackground(Main.BG_COLOR);
@@ -71,7 +72,7 @@ public class AdminDashboard extends JFrame {
         // Default View
         showPanel(dashPanel);
 
-        // Switch Logic
+        // Switch Logic for the buttons
         btnDash.addActionListener(e -> {
             updateSummaryCounts();
             showPanel(dashPanel);
@@ -102,7 +103,7 @@ public class AdminDashboard extends JFrame {
             btnUsers.setForeground(new Color(0xD1D8E0));
         });
 
-        // --- Hover Effects for Logout ---
+        // Hover Effects for Logout
         btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
             // Lighten the background slightly or change text color
@@ -123,6 +124,7 @@ public class AdminDashboard extends JFrame {
         addWindowControls();
     }
 
+    // Helper to switch the main content area to show the selected panel
     private void showPanel(JPanel panel) {
         contentArea.removeAll();
         panel.setBounds(0, 0, 950, 800);
@@ -133,7 +135,7 @@ public class AdminDashboard extends JFrame {
         contentArea.revalidate();
     }
 
-    // --- 1. DASHBOARD MANAGEMENT (The Graph) ---
+    // DASHBOARD MANAGEMENT
     private JPanel createDashboardManagement() {
         JPanel panel = new JPanel(null);
         panel.setBackground(Main.BG_COLOR);
@@ -229,6 +231,7 @@ public class AdminDashboard extends JFrame {
         return card;
     }
 
+    // Helper to refresh the counts on the dashboard cards by fetching the latest totals from the database
     public void updateSummaryCounts() {
         // Fetch direct from DB and update the UI labels immediately
         lblTotalPortfolios.setText(String.valueOf(getTotalCount("portfolios")));
@@ -236,6 +239,7 @@ public class AdminDashboard extends JFrame {
         dashPanel.repaint(); // Force graph to redraw too
     }
 
+    // Generic helper to get total count of records from any specified table, used for both users and portfolios
     private int getTotalCount(String tableName) {
         try (Connection conn = Database.getConnection()) {
             String sql = "SELECT COUNT(*) FROM " + tableName;
@@ -245,12 +249,12 @@ public class AdminDashboard extends JFrame {
         return 0;
     }
 
-    // --- 2. MANAGE POSTS (Portfolio Table) ---
+    //  MANAGE POSTS 
     private JPanel createPostManager() {
         JPanel panel = new JPanel(null);
         panel.setBackground(Main.BG_COLOR);
 
-        String[] cols = {"ID", "Project Title", "Owner", "Status"};
+        String[] cols = {"ID", "Project Title", "Owner", "Status", "Date Added"};
         postModel = new DefaultTableModel(cols, 0); 
         postTable = new JTable(postModel);          // Use the global variable
 
@@ -259,9 +263,31 @@ public class AdminDashboard extends JFrame {
         lblTitle.setBounds(30, 40, 500, 40);
         panel.add(lblTitle);
 
+        // --- View/Preview Button ---
+        JButton btnPreview = new JButton("VIEW PREVIEW");
+        btnPreview.setBounds(350, 530, 150, 40);
+        btnPreview.setBackground(new Color(0x34495E));
+        btnPreview.setFocusPainted(false);
+        btnPreview.setBorderPainted(false);
+        btnPreview.setForeground(Color.WHITE);
+        btnPreview.addActionListener(e -> showPostPreview());
+        panel.add(btnPreview);
+
         JLabel lblSearch = new JLabel("Search Projects:");
         lblSearch.setBounds(30, 85, 200, 20);
         panel.add(lblSearch);
+
+        // Inside createPostManager()
+        JButton btnUpdatePost = new JButton("UPDATE POST");
+        btnUpdatePost.setBounds(190, 530, 150, 40);
+        btnUpdatePost.setBackground(new Color(0x2ECC71));
+        btnUpdatePost.setForeground(Color.WHITE);
+        btnUpdatePost.setFocusPainted(false);
+        btnUpdatePost.setBorderPainted(false);
+        btnUpdatePost.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        btnUpdatePost.addActionListener(e -> updateSelectedPost());
+        panel.add(btnUpdatePost);
 
         JTextField txtSearch = new JTextField();
         txtSearch.setBounds(30, 110, 400, 35);
@@ -290,6 +316,12 @@ public class AdminDashboard extends JFrame {
 
         refreshPostTable();
 
+        postTable.getColumnModel().getColumn(0).setPreferredWidth(50);  // ID
+        postTable.getColumnModel().getColumn(1).setPreferredWidth(300); // Project Title (Wide)
+        postTable.getColumnModel().getColumn(2).setPreferredWidth(120); // Owner
+        postTable.getColumnModel().getColumn(3).setPreferredWidth(80);  // Status (Small)
+        postTable.getColumnModel().getColumn(4).setPreferredWidth(180);
+
         JScrollPane sp = new JScrollPane(postTable);
         sp.setBounds(30, 160, 880, 350);
         panel.add(sp);
@@ -317,7 +349,7 @@ public class AdminDashboard extends JFrame {
             boolean confirm = CustomDialog.showConfirm(this, "Permanently delete this project?");
             if (confirm) {
                 try (Connection conn = Database.getConnection()) {
-                    String sql = "DELETE FROM portfolios WHERE id = ?";
+                    String sql = "DELETE FROM projects WHERE id = ?";
                     PreparedStatement pst = conn.prepareStatement(sql);
                     pst.setInt(1, postId);
                     pst.executeUpdate();
@@ -335,7 +367,7 @@ public class AdminDashboard extends JFrame {
         return panel;
     }
 
-    // --- MANAGE USERS  ---
+    // MANAGE USERS
     private JPanel createUserManager() {
         JPanel panel = new JPanel(null);
         panel.setBackground(Main.BG_COLOR);
@@ -349,6 +381,18 @@ public class AdminDashboard extends JFrame {
         JLabel lblSearch = new JLabel("Search Users:");
         lblSearch.setBounds(30, 85, 200, 20);
         panel.add(lblSearch);
+
+        // Inside createUserManager()
+        JButton btnUpdate = new JButton("UPDATE USER");
+        btnUpdate.setBounds(190, 530, 150, 40); // Placed next to delete button
+        btnUpdate.setBackground(new Color(0x3498DB));
+        btnUpdate.setForeground(Color.WHITE);
+        btnUpdate.setFocusPainted(false);
+        btnUpdate.setBorderPainted(false);
+        btnUpdate.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        btnUpdate.addActionListener(e -> updateSelectedUser()); // We will create this method
+        panel.add(btnUpdate);
 
         JTextField txtSearch = new JTextField();
         txtSearch.setBounds(30, 110, 400, 35);
@@ -399,7 +443,124 @@ public class AdminDashboard extends JFrame {
         return panel;
     }
 
-    // --- Helper for Sidebar Buttons ---
+    // Helper to update the selected user's information in the database
+    private void updateSelectedUser() {
+        int selectedRow = userTable.getSelectedRow();
+        if (selectedRow == -1) {
+            CustomDialog.show(this, "Select a user to update.", false);
+            return;
+        }
+
+        int modelRow = userTable.convertRowIndexToModel(selectedRow);
+        String userId = userModel.getValueAt(modelRow, 0).toString();
+        String name = userModel.getValueAt(modelRow, 1).toString();
+        String studentId = userModel.getValueAt(modelRow, 2).toString();
+        String role = userModel.getValueAt(modelRow, 3).toString();
+        String email = userModel.getValueAt(modelRow, 4).toString();
+
+        try (Connection conn = Database.getConnection()) {
+            String sql = "UPDATE users SET full_name=?, student_id=?, role=?, email=? WHERE id=?";
+           PreparedStatement pst = conn.prepareStatement(sql);
+           pst.setString(1, name);
+           pst.setString(2, studentId);
+           pst.setString(3, role);
+           pst.setString(4, email);
+           pst.setString(5, userId);
+
+           pst.executeUpdate();
+           CustomDialog.show(this, "User updated successfully!", true);
+       } catch (Exception e) {
+           e.printStackTrace();
+           CustomDialog.show(this, "Error updating user.", false);
+       }
+    }   
+
+    // Helper to update the selected post's information in the database
+    private void updateSelectedPost() {
+        int selectedRow = postTable.getSelectedRow();
+        if (selectedRow == -1) {
+            CustomDialog.show(this, "Select a post to update.", false);
+            return;
+        }
+
+        int modelRow = postTable.convertRowIndexToModel(selectedRow);
+        int postId = Integer.parseInt(postModel.getValueAt(modelRow, 0).toString());
+        String title = postModel.getValueAt(modelRow, 1).toString();
+        String date = postModel.getValueAt(modelRow, 4).toString();
+
+        try (Connection conn = Database.getConnection()) {
+            String sql = "UPDATE projects SET project_name=?, status=?, upload_date=? WHERE id=?";
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setString(1, title);
+            pst.setString(2, date);
+            pst.setInt(3, postId);
+
+            pst.executeUpdate();
+            CustomDialog.show(this, "Project updated successfully!", true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            CustomDialog.show(this, "Error: Check date format (YYYY-MM-DD)", false);
+        }
+    }
+    
+    // Helper to show a preview of the selected post's description and image in a dialog
+    private void showPostPreview() {
+        int selectedRow = postTable.getSelectedRow();
+        if (selectedRow == -1) {
+            CustomDialog.show(this, "Select a post to preview.", false);
+            return;
+        }
+
+       int modelRow = postTable.convertRowIndexToModel(selectedRow);
+        int postId = Integer.parseInt(postModel.getValueAt(modelRow, 0).toString());
+
+        try (Connection conn = Database.getConnection()) {
+            // Fetch the description (bio) from the projects table
+            String sql = "SELECT description FROM projects WHERE id = ?";
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setInt(1, postId);
+            ResultSet rs = pst.executeQuery();
+
+            if (rs.next()) {
+                JPanel previewPanel = new JPanel(new BorderLayout(10, 10));
+                
+                // 1. Handle the Image
+                byte[] imgBytes = rs.getBytes("project_image");
+                JLabel imgLabel = new JLabel("No Image Provided", SwingConstants.CENTER);
+                imgLabel.setPreferredSize(new Dimension(300, 200));
+                imgLabel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+
+                if (imgBytes != null) {
+                    ImageIcon icon = new ImageIcon(imgBytes);
+                    // Scale image to fit the preview window nicely
+                    Image img = icon.getImage().getScaledInstance(300, 200, Image.SCALE_SMOOTH);
+                    imgLabel.setIcon(new ImageIcon(img));
+                    imgLabel.setText(""); 
+                }
+ 
+                // 2. Handle the Description
+                String content = rs.getString("description");
+                JTextArea textArea = new JTextArea(content != null ? content : "Empty description.");
+                textArea.setEditable(false);
+                textArea.setLineWrap(true);
+                textArea.setWrapStyleWord(true);
+            
+                JScrollPane scrollPane = new JScrollPane(textArea);
+                scrollPane.setPreferredSize(new Dimension(300, 100));
+
+                // Assemble the UI
+                previewPanel.add(imgLabel, BorderLayout.NORTH);
+                previewPanel.add(scrollPane, BorderLayout.CENTER);
+
+                JOptionPane.showMessageDialog(this, previewPanel, "Project Preview", JOptionPane.PLAIN_MESSAGE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            CustomDialog.show(this, "Error loading preview data.", false);
+        }
+    }
+
+    // Helper for Sidebar Buttons
     private JButton createSidebarBtn(String text, int y) {
         JButton btn = new JButton(text);
         btn.setBounds(0, y, 250, 50);
@@ -417,7 +578,7 @@ public class AdminDashboard extends JFrame {
         return btn;
     }
 
-    // --- LOGOUT FUNCTION ---
+    // LOGOUT FUNCTION
     private void logout() {
         boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to logout?");
 
@@ -431,15 +592,14 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // --- Helper to refresh the posts table with the latest data from the database ---
+    // Helper to refresh the posts table with the latest data from the database
     private void refreshPostTable() {
         // Clear existing rows first
        postModel.setRowCount(0);
 
         try (Connection conn = Database.getConnection()) {
-           // Query to join portfolios and users to get the owner's name
-            String sql = "SELECT p.id, p.project_name, u.username, p.status " +
-                     "FROM portfolios p " +
+            String sql = "SELECT p.id, p.project_name, u.username, 'Active' AS status, p.upload_date " +
+                     "FROM projects p " +
                      "JOIN users u ON p.user_id = u.id";
         
             ResultSet rs = conn.createStatement().executeQuery(sql);
@@ -449,7 +609,8 @@ public class AdminDashboard extends JFrame {
                     rs.getInt("id"), 
                     rs.getString("project_name"), 
                     rs.getString("username"), 
-                    rs.getString("status")
+                    rs.getString("status"),
+                    rs.getString("upload_date")
                 });
             }
         } catch (Exception e) {
@@ -458,7 +619,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // --- Helper to load user data into the table ---
+    // Helper to load user data into the table
     private void loadUserData() {
         // 1. Clear the table first so we don't duplicate rows
         if (userModel == null) return;
@@ -488,7 +649,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // --- Helper to delete the selected user from the database and refresh the table ---
+    // Helper to delete the selected user from the database and refresh the table
     private void deleteSelectedUser() {
         int selectedRow = userTable.getSelectedRow();
         if (selectedRow == -1) {
@@ -516,7 +677,7 @@ public class AdminDashboard extends JFrame {
         }
     }
 
-    // --- Helper to get monthly activity data for the graph ---
+    // Helper to get monthly activity data for the graph
     private int[] getMonthlyActivityData() {
         int[] monthlyCounts = new int[6]; // To store counts for the last 6 months
         try (Connection conn = Database.getConnection()) {
@@ -537,7 +698,7 @@ public class AdminDashboard extends JFrame {
         return monthlyCounts;
     }
 
-    // --- Helper to get total portfolios count for the dashboard card ---
+    // Helper to get total portfolios count for the dashboard card
     public static int getTotalPortfolios() {
         String sql = "SELECT COUNT(*) FROM portfolios";
         // Add 'Database.' before getConnection()
@@ -553,7 +714,7 @@ public class AdminDashboard extends JFrame {
         return 0;
     }
 
-    // --- Helper to get total users count for the dashboard card ---
+    // Helper to get total users count for the dashboard card
     private void addWindowControls() {
         JLayeredPane lp = this.getLayeredPane();
 
