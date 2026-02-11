@@ -34,7 +34,7 @@ src/
 1. Clone the repo:
 
 ```text
-git clone https://github.com/cymriccc/Student-Portfolio-System.git
+git clone https://github.com/cymriccc/Portfolio-Mangement-System.git
 ```
 2. Database Configuration:
 
@@ -53,10 +53,10 @@ git clone https://github.com/cymriccc/Student-Portfolio-System.git
 - [x] Admin Login for managing database
 - [x] Create Project Gallery View
 - [x] Finalize Settings & Profile Page
-- [ ] Add function to Dashboard Overview
-- [ ] Customize scroll bar and view image in discovery portfolio
-- [ ] Add advanced filtering and search for the Project Gallery
-- [ ] Direct "Open/Download" functionality for PDF assets
+- [x] Add function to Dashboard Overview
+- [x] Customize scroll bar and view image in discovery portfolio
+- [x] Add advanced filtering and search for the Project Gallery
+- [x] Direct "Open/Download" functionality for PDF assets
 
 ## ⚖️ License
 This project is licensed under the MIT License — see the LICENSE file for details.
