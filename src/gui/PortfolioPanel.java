@@ -15,7 +15,7 @@ public class PortfolioPanel extends JPanel {
     private JPanel galleryContainer;
     private int currentUserId; 
     private Set<String> selectedTags = new HashSet<>(); // To keep track of selected tags for filtering
-    private final int MAX_VISIBLE_TAGS = 8;
+    private final int MAX_VISIBLE_TAGS = 8; 
     private JTextField searchField;
     private JPanel rightSidebar;
 
@@ -40,6 +40,7 @@ public class PortfolioPanel extends JPanel {
             BorderFactory.createEmptyBorder(10, 15, 10, 15) 
         ));
 
+        // Add search functionality
         searchField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent e) {
                 loadProjects(currentUserId, "SEARCH"); 
@@ -53,7 +54,6 @@ public class PortfolioPanel extends JPanel {
                     searchField.setForeground(Color.BLACK);
                 }
             }
-
             @Override
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (searchField.getText().isEmpty()) {
@@ -160,6 +160,7 @@ public class PortfolioPanel extends JPanel {
         boolean hasSearch = !searchField.getText().trim().isEmpty() && 
                             !searchField.getText().equals(" Search projects...");
 
+        
         if (!selectedTags.isEmpty() || hasSearch) {
             JButton clearBtn = new JButton("Clear All");
             clearBtn.setFont(new Font("Helvetica", Font.BOLD, 11));
@@ -183,7 +184,8 @@ public class PortfolioPanel extends JPanel {
         Set<String> allTags = fetchUniqueTags();
         int count = 0;
         
-        for (String tag : allTags) {
+        // Display up to MAX_VISIBLE_TAGS as pills, then show a "More" button if there are additional tags
+        for (String tag : allTags) {  
             if (count < MAX_VISIBLE_TAGS) {
                 JToggleButton pill = createTagPill(tag);
                 pill.setPreferredSize(new Dimension(190, 38));
@@ -247,8 +249,9 @@ public class PortfolioPanel extends JPanel {
 
     // Displays a popup with all tags when "More" is clicked
     private void showAllTagsPopup(Set<String> allTags) {
-        TagSelectionDialog dialog = new TagSelectionDialog(
-            (Frame) SwingUtilities.getWindowAncestor(this), 
+        TagSelectionDialog dialog = new TagSelectionDialog(  
+            // Pass the parent frame for proper modality
+            (Frame) SwingUtilities.getWindowAncestor(this),  
             allTags, 
             selectedTags
         );
@@ -280,10 +283,12 @@ public class PortfolioPanel extends JPanel {
             JPanel listPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
             listPanel.setBackground(Color.WHITE);
             
+            // Add all tags as pills in the popup
             for (String tag : allTags) {
                 listPanel.add(createTagPill(tag));
             }
 
+            // Dynamically adjust the height of the list panel based on the number of tags
             int totalTags = allTags.size();
             int estimatedRows = (totalTags / 3) + 1;
             int calculatedHeight = estimatedRows * 60; 
@@ -322,7 +327,7 @@ public class PortfolioPanel extends JPanel {
             cancelBtn.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0)));
             cancelBtn.setFocusPainted(false);
             cancelBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            cancelBtn.addActionListener(e -> dispose());
+            cancelBtn.addActionListener(e -> dispose()); // Just close the dialog without applying changes since filters are applied in real-time
 
             // Apply Button
             JButton doneBtn = new JButton("APPLY FILTERS");
@@ -333,7 +338,7 @@ public class PortfolioPanel extends JPanel {
             doneBtn.setFocusPainted(false);
             doneBtn.setBorderPainted(false);
             doneBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            doneBtn.addActionListener(e -> dispose());
+            doneBtn.addActionListener(e -> dispose()); // Filters are applied in real-time
             
             footer.add(cancelBtn);
             footer.add(doneBtn);
@@ -343,8 +348,9 @@ public class PortfolioPanel extends JPanel {
         }
     }
 
+    // Fetches unique tags from the database for the current user's projects
     private Set<String> fetchUniqueTags() {
-        Set<String> uniqueTags = new java.util.TreeSet<>();
+        Set<String> uniqueTags = new java.util.TreeSet<>(); // TreeSet to keep tags sorted alphabetically
         String sql = "SELECT DISTINCT tags FROM projects WHERE user_id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement pst = conn.prepareStatement(sql)) {
@@ -352,9 +358,14 @@ public class PortfolioPanel extends JPanel {
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 String t = rs.getString("tags");
-                if (t != null) for (String p : t.split(",")) uniqueTags.add(p.trim());
+                // Split tags by comma and add to the set
+                if (t != null) 
+                    for (String p : t.split(",")) 
+                uniqueTags.add(p.trim());
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        }
         return uniqueTags;
     }
 
@@ -670,6 +681,7 @@ public class PortfolioPanel extends JPanel {
     }
 }
 
+    // Deletes a project and all its associated files from the database after user confirmation
     private void deleteProject(int projectId) {
         boolean confirm = CustomDialog.showConfirm(this, "Are you sure you want to delete this project and all its files?");
 

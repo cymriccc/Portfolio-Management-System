@@ -42,7 +42,7 @@ public class AdminDashboard extends JFrame {
 
         // Inside Sidebar panel setup
         activeIndicator = new JPanel();
-        activeIndicator.setBounds(0, 120, 5, 40); // Matches the first button's Y
+        activeIndicator.setBounds(0, 120, 5, 40); 
         activeIndicator.setBackground(Main.ACCENT_COLOR); 
         sidebar.add(activeIndicator);
 
@@ -106,10 +106,9 @@ public class AdminDashboard extends JFrame {
         // Hover Effects for Logout
         btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
-            // Lighten the background slightly or change text color
             btnLogout.setContentAreaFilled(true); 
-            btnLogout.setBackground(new Color(0x3E444A)); // A slightly lighter dark shade
-            btnLogout.setForeground(new Color(0xE74C3C)); // Highlight text in your blue accent
+            btnLogout.setBackground(new Color(0x3E444A)); 
+            btnLogout.setForeground(new Color(0xE74C3C)); 
         }
 
         public void mouseExited(java.awt.event.MouseEvent e) {
@@ -129,8 +128,6 @@ public class AdminDashboard extends JFrame {
         contentArea.removeAll();
         panel.setBounds(0, 0, 950, 800);
         contentArea.add(panel);
-    
-        // Safety check to ensure the UI refreshes
         contentArea.repaint();
         contentArea.revalidate();
     }
@@ -161,33 +158,31 @@ public class AdminDashboard extends JFrame {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
-                // 1. Fetch REAL data from DB
+                // Fetch REAL data from DB
                 int[] activity = getMonthlyActivityData();
                 String[] monthNames = new String[6];
                 
                 // Get current month to label backwards
                 java.time.LocalDate now = java.time.LocalDate.now();
                 for (int i = 0; i < 6; i++) {
-                    // Subtract months to get the name for each bar
                     java.time.Month m = now.minusMonths(5 - i).getMonth();
-                    // Convert to a 3-letter string (e.g., "JAN")
                     monthNames[i] = m.name().substring(0, 3);
                 }
 
-                // 2. Draw Axis
+                // Draw Axis
                 g2.setColor(Color.GRAY);
-                g2.drawLine(50, 230, 450, 230); // X-Axis
-                g2.drawLine(50, 40, 50, 230);   // Y-Axis
+                g2.drawLine(50, 230, 450, 230); 
+                g2.drawLine(50, 40, 50, 230); 
 
-                // 3. Draw Bars based on real counts
+                // Draw Bars based on real counts
                 for (int i = 0; i < activity.length; i++) {
                     // Scale bar height (9 * 15 = 135 pixels tall)
                     int barHeight = Math.min(activity[i] * 15, 170); 
                 
-                    g2.setColor(Main.ACCENT_COLOR); // Use a consistent color for bars
+                    g2.setColor(Main.ACCENT_COLOR);
                     g2.fillRect(70 + (i * 60), 230 - barHeight, 40, barHeight);
                 
-                    // Labels - Adjusted Y to 250 to keep them clear of the axis
+                    // Labels 
                     g2.setColor(Main.TEXT_COLOR);
                     g2.setFont(new Font("Helvetica", Font.BOLD, 12));
                     g2.drawString(monthNames[i], 75 + (i * 60), 250);
@@ -236,7 +231,7 @@ public class AdminDashboard extends JFrame {
         // Fetch direct from DB and update the UI labels immediately
         lblTotalPortfolios.setText(String.valueOf(getTotalCount("portfolios")));
         lblTotalUsers.setText(String.valueOf(getTotalCount("users")));
-        dashPanel.repaint(); // Force graph to redraw too
+        dashPanel.repaint(); 
     }
 
     // Generic helper to get total count of records from any specified table, used for both users and portfolios
@@ -263,7 +258,7 @@ public class AdminDashboard extends JFrame {
         lblTitle.setBounds(30, 40, 500, 40);
         panel.add(lblTitle);
 
-        // --- View/Preview Button ---
+        // View/Preview Button
         JButton btnPreview = new JButton("VIEW PREVIEW");
         btnPreview.setBounds(350, 530, 150, 40);
         btnPreview.setBackground(new Color(0x34495E));
@@ -326,7 +321,7 @@ public class AdminDashboard extends JFrame {
         sp.setBounds(30, 160, 880, 350);
         panel.add(sp);
 
-        // --- 3. Delete Action ---
+        // Delete Action
         JButton btnDeletePost = new JButton("DELETE POST");
         btnDeletePost.setBounds(30, 530, 150, 40);
         btnDeletePost.setBackground(new Color(0xE74C3C));
@@ -377,7 +372,7 @@ public class AdminDashboard extends JFrame {
         lblTitle.setBounds(30, 40, 500, 40);
         panel.add(lblTitle);
 
-        // --- Search Field ---
+        // Search Field
         JLabel lblSearch = new JLabel("Search Users:");
         lblSearch.setBounds(30, 85, 200, 20);
         panel.add(lblSearch);
@@ -402,7 +397,7 @@ public class AdminDashboard extends JFrame {
         ));
         panel.add(txtSearch);
 
-        // --- Table Setup ---
+        // Table Setup
         String[] columns = {"ID", "Name", "Student ID", "Role", "Email"};
         userModel = new DefaultTableModel(columns, 0); // Use global userModel
         userTable = new JTable(userModel);            // Use global userTable
@@ -429,7 +424,7 @@ public class AdminDashboard extends JFrame {
         sp.setBounds(30, 160, 880, 350); 
         panel.add(sp);
 
-        // --- Delete Button ---
+        // Delete Button
         JButton btnDelete = new JButton("DELETE USER");
         btnDelete.setBounds(30, 530, 150, 40);
         btnDelete.setBackground(new Color(0xE74C3C));
@@ -1012,7 +1007,7 @@ public class AdminDashboard extends JFrame {
         Color minHover = new Color(0xD1D8E0); 
         Color closeHover = new Color(0xE74C3C);
 
-        // -- CLOSE BUTTON --
+        // CLOSE BUTTON
         JButton closeBtn = new JButton("X");
         closeBtn.setBounds(1150, 5, 45, 30);
         closeBtn.setBackground(idleColor);
@@ -1033,7 +1028,7 @@ public class AdminDashboard extends JFrame {
             }
         });
 
-        // -- MINIMIZE BUTTON --
+        // MINIMIZE BUTTON
         JButton minBtn = new JButton("-");
         minBtn.setBounds(1105, 5, 45, 30);
         minBtn.setBackground(idleColor);

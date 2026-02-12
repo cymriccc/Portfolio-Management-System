@@ -155,6 +155,7 @@ public class LoginForm extends JFrame {
                     myFrame dashboardFrame = new myFrame();
                     dashboardFrame.loadExistingAvatar(actualUsername);
                     
+                    // Passes user info to the dashboard for personalized content
                     new MainContent(dashboardFrame, name, course, actualUsername, id);
                     new Menu(dashboardFrame);
                     new frameDisplay(dashboardFrame);

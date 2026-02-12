@@ -37,7 +37,7 @@ public class DiscoveryPanel extends JPanel {
             BorderFactory.createEmptyBorder(10, 15, 10, 15)
         ));
 
-        // this allows the system to have the "Search..." placeholder text that disappears when the user clicks on the field
+        // Search Field Placeholder Logic
         searchField.addFocusListener(new java.awt.event.FocusAdapter() { 
             @Override
             public void focusGained(java.awt.event.FocusEvent e) {
@@ -66,7 +66,7 @@ public class DiscoveryPanel extends JPanel {
         mainContentWrapper.setBackground(Main.BG_COLOR);
         mainContentWrapper.setBounds(20, 150, 900, 550);
 
-        feedContainer = new JPanel(new GridLayout(0, 1, 25, 30)); // Dynamic rows, 1 column, with spacing
+        feedContainer = new JPanel(new GridLayout(0, 1, 25, 30)); 
         feedContainer.setBackground(Main.BG_COLOR);
         feedContainer.setBorder(BorderFactory.createEmptyBorder(20, 40, 40, 40));
 
@@ -205,6 +205,7 @@ public class DiscoveryPanel extends JPanel {
         loadCommunityFeed(); // Re-runs the SQL query to get the newest posts
     }
 
+    // Refreshes the right sidebar with global tags from the database
     private void refreshGlobalTags() {
         rightSidebar.removeAll();
 
@@ -292,6 +293,7 @@ public class DiscoveryPanel extends JPanel {
         rightSidebar.repaint();
     }
 
+    // Fetches all unique tags from the database across all projects
     private Set<String> fetchAllGlobalTags() {
         Set<String> uniqueTags = new java.util.TreeSet<>();
         String sql = "SELECT DISTINCT tags FROM projects";
@@ -312,6 +314,7 @@ public class DiscoveryPanel extends JPanel {
         return uniqueTags;
     }
 
+    // Opens a dialog showing all tags for selection
     private void showAllTagsDialog(Set<String> allTags) {
         TagSelectionDialog dialog = new TagSelectionDialog(
             (Frame) SwingUtilities.getWindowAncestor(this),
@@ -324,6 +327,7 @@ public class DiscoveryPanel extends JPanel {
         loadCommunityFeed();
     }
 
+    // Dialog class for selecting tags
     private class TagSelectionDialog extends JDialog {
         private JPanel listPanel;
         private JTextField tagSearch;
@@ -482,6 +486,7 @@ public class DiscoveryPanel extends JPanel {
             btn.setBorder(BorderFactory.createLineBorder(new Color(0xD1D8E0), 1, true));
         }
 
+        // Updates the tag list based on the search query
         private void updateTagList(String query) {
             listPanel.removeAll();
             for (String tag : allTags) {
@@ -502,23 +507,6 @@ public class DiscoveryPanel extends JPanel {
             listPanel.revalidate();
             listPanel.repaint();
         }
-    }
-
-
-    private byte[] loadPlaceholderBytes() {
-        try {
-            java.net.URL imgURL = getClass().getResource("/assets/default_preview.png");
-            if (imgURL != null) {
-                try (java.io.InputStream is = imgURL.openStream()) {
-                    return is.readAllBytes();
-                }
-            } else {
-                System.out.println("❌ Discovery: Could not find /assets/default_preview.png");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     // This method creates a card for each project in the discovery feed, handling both image and PDF previews
@@ -625,6 +613,23 @@ public class DiscoveryPanel extends JPanel {
         return card;
     }
 
+    // Loads placeholder image bytes from resources
+    private byte[] loadPlaceholderBytes() {
+        try {
+            java.net.URL imgURL = getClass().getResource("/assets/default_preview.png");
+            if (imgURL != null) {
+                try (java.io.InputStream is = imgURL.openStream()) {
+                    return is.readAllBytes();
+                }
+            } else {
+                System.out.println("❌ Discovery: Could not find /assets/default_preview.png");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
     private void showProjectDetails(int projectId) {
         String sql = "SELECT p.project_name, p.file_data, p.file_name, " +
                  "pr.description, pr.tags, u.full_name " +

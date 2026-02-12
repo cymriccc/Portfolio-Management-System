@@ -139,7 +139,7 @@ public class AddPortfolioPopup extends JDialog {
         
         btnClose.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                btnClose.setForeground(new Color(0xD63031)); // Red hover
+                btnClose.setForeground(new Color(0xD63031)); 
             }
             public void mouseExited(java.awt.event.MouseEvent e) {
                 btnClose.setForeground(new Color(0x636E72));
