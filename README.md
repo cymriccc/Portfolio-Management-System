@@ -2,7 +2,7 @@
 
 A professional desktop-based management system designed for developers and creatives to organize, showcase, and sync their project portfolios. Built with **Java Swing** and integrated with **MySQL** for robust data persistence.
 
-> **Note:** This project is currently in **Active Development**. Features are being added and refined as part of my BSIT-MWA coursework at National University.
+> **Note:** This project was developed and completed as part of my BSIT-MWA coursework at National University.
 
 ## 🚀 Features
 * **Secure Authentication**: Login and Registration system with credentials stored in MySQL.
@@ -31,32 +31,29 @@ src/
  └── gui/           # UI Components (LoginForm, MainContent, ProfilePanel, etc.)
 ```
 ## 🏗️ Installation & Setup
-1. Clone the repo:
+1. **Clone the repo:**
+   ```bash
+   git clone https://github.com/cymriccc/Portfolio-Management-System.git
+   ```
 
-```text
-git clone https://github.com/cymriccc/Portfolio-Mangement-System.git
-```
-2. Database Configuration:
+2. **Database Configuration:**
+   * Import the provided SQL schema into your MySQL instance.
+   * Update `db/Database.java` with your local credentials.
 
-* Import the provided SQL schema into your MySQL instance.
+3. **Run the Application:**
+   * Run `Main.java` inside the `main` package to start the application.
 
-* Update `db/Database.java` with your local credentials.
-
-3. Run the Application:
-
-* Run `Main.java` inside the `main` package to start the application.
-
-## 📝 Roadmap (Planned Features)
-- [x] Implement Slate & Ice UI Theme
-- [x] Fix CustomDialog JPanel compatibility
-- [x] Build Portfolio Upload Logic
-- [x] Admin Login for managing database
-- [x] Create Project Gallery View
-- [x] Finalize Settings & Profile Page
-- [x] Add function to Dashboard Overview
-- [x] Customize scroll bar and view image in discovery portfolio
-- [x] Add advanced filtering and search for the Project Gallery
-- [x] Direct "Open/Download" functionality for PDF assets
+## ✅ Completed Roadmap
+* [x] Implement Slate & Ice UI Theme
+* [x] Fix CustomDialog JPanel compatibility
+* [x] Build Portfolio Upload Logic
+* [x] Admin Login for managing database
+* [x] Create Project Gallery View
+* [x] Finalize Settings & Profile Page
+* [x] Add function to Dashboard Overview
+* [x] Customize scroll bar and view image in discovery portfolio
+* [x] Add advanced filtering and search for the Project Gallery
+* [x] Direct "Open/Download" functionality for PDF assets
 
 ## ⚖️ License
 This project is licensed under the MIT License — see the LICENSE file for details.
