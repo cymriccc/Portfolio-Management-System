@@ -1,59 +1,102 @@
 # Vantage Portfolio Management System
 
-A professional desktop-based management system designed for developers and creatives to organize, showcase, and sync their project portfolios. Built with **Java Swing** and integrated with **MySQL** for robust data persistence.
+[![Java Version](https://img.shields.io/badge/Java-JDK_8%2B-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
+[![Database](https://img.shields.io/badge/Database-MySQL_8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![JDBC](https://img.shields.io/badge/Driver-MySQL_Connector%2FJ-00758F?style=flat-square)](https://dev.mysql.com/downloads/connector/j/)
+[![UI Style](https://img.shields.io/badge/UI_Aesthetic-Slate_%26_Ice-38BDF8?style=flat-square)](https://github.com/cymriccc/Portfolio-Management-System)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
-> **Note:** This project was developed and completed as part of my BSIT-MWA coursework at National University.
+**Vantage Portfolio Management System** is a professional desktop-based management application engineered for developers and creatives to organize, showcase, filter, and synchronize their project portfolios. Built with **Java Swing** and integrated with **MySQL** via JDBC for secure, multi-user data persistence.
 
-## 🚀 Features
-* **Secure Authentication**: Login and Registration system with credentials stored in MySQL.
-* **Dynamic Dashboard**: Real-time greeting and course/year level display synced with user data.
-* **Profile Synchronization**: Ability to update personal information (Full Name, Student ID, Email, Bio) and reflect changes instantly across the UI.
-* **Slate & Ice UI**: A modern, professional interface using a light "Ice" background with "Slate" text and indigo accents.
-* **Intelligent Custom Dialogs**: Custom-built `CustomDialog` system with dynamic Success (Indigo) and Error (Red) states.
+> **Academic Note:** This application was developed and completed as part of the BSIT-MWA coursework at National University.
 
-## 🔒 Security & Validation
-This version implements strict data integrity checks to ensure high-quality database entries:
-* **Credential Formatting**: Critical fields like `Username` and `Password` block internal spaces to prevent common login errors.
-* **Validation Engines**: Implements Regex-based email verification and minimum password length requirements.
-* **Binary Data Management**: Securely handles raw file data (BLOBs) for project uploads to ensure files remain accessible and uncorrupted.
+---
+
+## 🚀 Core Features
+
+- **Secure Authentication & Identity Management:** Full user registration and authentication flow with credential persistence, session handling, and role-based access in MySQL.
+- **Dynamic User Dashboard:** Displays real-time personalized greetings, academic course/year level metadata, and aggregated portfolio statistics synced directly with the database.
+- **Profile Synchronization Engine:** Instant cross-UI reflection when updating personal information (Full Name, Student ID, Email, and Bio).
+- **Project Discovery & Gallery:** Modern, filterable gallery view supporting advanced search, tags, custom scrollbar styling, image rendering, and direct "Open/Download" actions for binary PDF assets.
+- **Portfolio Upload Pipeline:** Streamlined submission interface allowing users to bundle metadata, preview images, and project documentation into the cloud/database store.
+- **Slate & Ice Design System:** A clean, high-contrast interface featuring a modern "Ice" canvas background, slate typography, indigo accent highlights, and custom-designed UI dialogs (`CustomDialog`) with state-aware feedback.
+
+---
+
+## 🔒 Security & Data Integrity
+
+- **Strict Input Validation:** Prevents common entry errors using regex-based email validation and enforce minimum length thresholds.
+- **Credential Sanitization:** Blocks internal whitespace patterns in sensitive fields (`Username` and `Password`) to eliminate authentication edge cases.
+- **Binary Data Management (BLOBs):** Utilizes direct database BLOB storage streams for project file attachments and PDF documentation to ensure payload integrity.
+
+---
 
 ## 🛠️ Tech Stack
-* **Language**: Java
-* **GUI Toolkit**: Java Swing
-* **Database**: MySQL
-* **Database Connectivity**: JDBC (MySQL Connector/J)
+
+- **Language:** Java (JDK 8 or higher)
+- **GUI Framework:** Java Swing & AWT
+- **Database Engine:** MySQL 8.0+
+- **Connectivity:** JDBC (MySQL Connector/J)
+
+---
 
 ## 📂 Project Structure
+
 ```text
-src/
- ├── main/          # Application entry point and global theme constants
- ├── db/            # Database connection and configuration
- └── gui/           # UI Components (LoginForm, MainContent, ProfilePanel, etc.)
+Portfolio-Management-System/
+├── src/
+│   ├── db/            # MySQL connection handlers & JDBC utilities
+│   ├── gui/           # Swing frames, panels (LoginForm, ProfilePanel, etc.)
+│   └── main/          # Application entry point (Main.java) & global theme constants
+├── .gitignore         # IDE and compilation artifact exclusions
+└── README.md          # System documentation
 ```
-## 🏗️ Installation & Setup
-1. **Clone the repo:**
+
+---
+
+## 💻 Installation & Setup
+
+### Prerequisites
+
+- **Java Development Kit (JDK) 8+** installed.
+- **MySQL Server 8.0+** running locally or remotely.
+- **MySQL Connector/J (`mysql-connector-j-*.jar`)** added to project classpath.
+
+### Setup Steps
+
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/cymriccc/Portfolio-Management-System.git
    ```
 
 2. **Database Configuration:**
-   * Import the provided SQL schema into your MySQL instance.
-   * Update `db/Database.java` with your local credentials.
+   * Import the project's SQL schema into your local MySQL instance.
+   * Update credentials in `src/db/Database.java` (Host, Port, DB Name, User, Password).
 
 3. **Run the Application:**
-   * Run `Main.java` inside the `main` package to start the application.
+   * Execute `Main.java` inside the `src/main/` package to launch the login interface.
 
-## ✅ Completed Roadmap
-* [x] Implement Slate & Ice UI Theme
-* [x] Fix CustomDialog JPanel compatibility
-* [x] Build Portfolio Upload Logic
-* [x] Admin Login for managing database
-* [x] Create Project Gallery View
-* [x] Finalize Settings & Profile Page
-* [x] Add function to Dashboard Overview
-* [x] Customize scroll bar and view image in discovery portfolio
-* [x] Add advanced filtering and search for the Project Gallery
-* [x] Direct "Open/Download" functionality for PDF assets
+---
 
-## ⚖️ License
-This project is licensed under the MIT License — see the LICENSE file for details.
+## ✅ Completed Milestones
+
+- [x] Implement Slate & Ice UI Theme
+- [x] Fix CustomDialog `JPanel` compatibility layer
+- [x] Build Portfolio Upload & BLOB Persistence Logic
+- [x] Admin Login and Database Administration Control
+- [x] Create Dynamic Project Gallery View
+- [x] Finalize Settings & Profile Customization Page
+- [x] Integrate Functional Dashboard Metrics Overview
+- [x] Custom Scrollbars and Visual Image Rendering in Discovery View
+- [x] Advanced Filtering and Search in Project Gallery
+- [x] Direct "Open/Download" PDF asset pipeline
+
+---
+
+## 📄 License
+
+Distributed under the **MIT License**. See `LICENSE` for details.
+
+---
+
+**Author**: [@cymriccc](https://github.com/cymriccc), [@tineetot](https://github.com/tineetot)
